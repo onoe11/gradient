@@ -1308,6 +1308,15 @@
     const gctx = gradientCanvas.getContext('2d');
     const xEditor = new CurveEditor(document.getElementById('xCurveCanvas'), 'horizontal', 'x');
     const yEditor = new CurveEditor(document.getElementById('yCurveCanvas'), 'vertical', 'y');
+    
+    // Initialize curves with random values (3-5 points each)
+    const randomSeed = Math.floor(Math.random() * 1000000);
+    const tempRNG = new SeededRNG(randomSeed);
+    const xComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+    const yComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+    xEditor.randomize(tempRNG, xComplexity);
+    yEditor.randomize(tempRNG, yComplexity);
+    
     const widthInput = document.getElementById('widthInput');
     const heightInput = document.getElementById('heightInput');
     const blendMode = document.getElementById('blendMode');
@@ -1452,11 +1461,9 @@
     // Seeded RNG for reproducible randomization
     const seededRNG = new SeededRNG(0);
 
-    // Initialize complexity - fixed defaults: X = 4, Y = 3
-    const initXComplexity = 4;
-    const initYComplexity = 3;
-    xEditor.setMaxPoints(initXComplexity);
-    yEditor.setMaxPoints(initYComplexity);
+    // Set max points based on the random complexity we just generated
+    xEditor.setMaxPoints(xComplexity);
+    yEditor.setMaxPoints(yComplexity);
 
     // When multi-color random is used, this holds an array of RGB colors.
     let activePalette = null;
@@ -1930,7 +1937,7 @@
       // Generate random seed for curves if "Randomize Curves" is checked
       if (autoRandomSeed) {
         const seed = Math.floor(Math.random() * 1000000);
-        seededRNG.setSeed(seed);
+      seededRNG.setSeed(seed);
         // Fixed complexity: X = 4, Y = 3
         xEditor.randomize(seededRNG, 4);
         yEditor.randomize(seededRNG, 3);
