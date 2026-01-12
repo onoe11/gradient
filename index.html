@@ -111,6 +111,20 @@
       font-weight: 500;
       letter-spacing: -0.01em;
       color: var(--text);
+      transition: text-shadow 0.1s ease, filter 0.1s ease;
+      cursor: default;
+    }
+
+    h1:hover {
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+
+    h1 img {
+      transition: filter 0.1s ease;
+    }
+
+    h1:hover img {
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
     }
 
     .btn {
@@ -139,6 +153,12 @@
       font-weight: 700;
       position: relative;
       overflow: hidden;
+      z-index: 1;
+    }
+
+    #randomBtn > * {
+      position: relative;
+      z-index: 1;
     }
 
     #randomBtn::before {
@@ -454,21 +474,30 @@
     }
 
     #yCurveCanvas {
-      mix-blend-mode: multiply;
+      mix-blend-mode: normal; /* Changed from multiply to normal for visibility */
       isolation: isolate;
     }
 
     #xCurveCanvas {
-      mix-blend-mode: screen;
+      mix-blend-mode: normal; /* Changed from screen to normal for visibility */
       isolation: isolate;
     }
     
-    /* When curve is active, temporarily override blend mode for visibility */
+    /* When curve is active, use normal blend mode */
     #yCurveCanvas.curves-enabled.active-curve {
       mix-blend-mode: normal;
     }
     
     #xCurveCanvas.curves-enabled.active-curve {
+      mix-blend-mode: normal;
+    }
+    
+    /* Inactive curves should also use normal blend mode for visibility */
+    #yCurveCanvas.curves-enabled:not(.active-curve) {
+      mix-blend-mode: normal;
+    }
+    
+    #xCurveCanvas.curves-enabled:not(.active-curve) {
       mix-blend-mode: normal;
     }
 
@@ -1115,8 +1144,12 @@
         ];
         this.dragIndex = null;
         this.radius = 8;
+        this.pointPadding = 2; // Padding to keep points from canvas edges
         this.maxPoints = 100; // Allow many points (effectively unlimited for manual addition)
         this.mousePos = null; // Track mouse position for preview line
+        this.animationStartTime = null;
+        this.previousDragIndex = null;
+        this.animationDuration = 100; // 100ms
         this._bind();
         this.draw();
       }
@@ -1195,16 +1228,30 @@
           const p = pos(e);
           const { hit, idx } = this._hitTest(p);
           if (hit) {
+            this.previousDragIndex = this.dragIndex;
             this.dragIndex = idx;
+            this.animationStartTime = performance.now();
+            this.draw();
           } else {
             // add point (allow adding points by clicking on the curve)
               const t = this.orientation === 'horizontal' ? p.x : p.y;
               const v = this.orientation === 'horizontal' ? 1 - p.y : p.x;
               // Don't add if too close to endpoints (t=0 or t=1)
               if (t > 0.05 && t < 0.95) {
-                this.points.push({ t: t, v: v });
+                // Calculate padding in normalized coordinates
+                const paddingT = (this.radius + this.pointPadding) / (this.orientation === 'horizontal' ? this.canvas.width : this.canvas.height);
+                const paddingV = (this.radius + this.pointPadding) / (this.orientation === 'horizontal' ? this.canvas.height : this.canvas.width);
+                
+                // Clamp the new point position
+                const clampedT = Math.min(1 - paddingT, Math.max(paddingT, t));
+                const clampedV = Math.min(1 - paddingV, Math.max(paddingV, v));
+                
+                this.points.push({ t: clampedT, v: clampedV });
                 this.points.sort((a, b) => a.t - b.t);
-                this.dragIndex = this.points.findIndex(pt => Math.abs(pt.t - t) < 0.01 && Math.abs(pt.v - v) < 0.01);
+                this.previousDragIndex = this.dragIndex;
+                const newIndex = this.points.findIndex(pt => Math.abs(pt.t - clampedT) < 0.01 && Math.abs(pt.v - clampedV) < 0.01);
+                this.dragIndex = newIndex;
+                this.animationStartTime = performance.now();
                 this.draw();
               // Trigger gradient update when point is added
               if (typeof renderGradient === 'function') {
@@ -1238,8 +1285,12 @@
           const t = this.orientation === 'horizontal' ? p.x : p.y;
           const v = this.orientation === 'horizontal' ? 1 - p.y : p.x;
           
-          const clampedT = Math.min(1, Math.max(0, t));
-          const clampedV = Math.min(1, Math.max(0, v));
+          // Calculate padding in normalized coordinates (0-1)
+          const paddingT = (this.radius + this.pointPadding) / (this.orientation === 'horizontal' ? this.canvas.width : this.canvas.height);
+          const paddingV = (this.radius + this.pointPadding) / (this.orientation === 'horizontal' ? this.canvas.height : this.canvas.width);
+          
+          const clampedT = Math.min(1 - paddingT, Math.max(paddingT, t));
+          const clampedV = Math.min(1 - paddingV, Math.max(paddingV, v));
           this.points[this.dragIndex] = { t: clampedT, v: clampedV };
           this.points.sort((a, b) => a.t - b.t);
           this.dragIndex = this.points.indexOf(this.points[this.dragIndex]);
@@ -1256,8 +1307,19 @@
             if (typeof renderGradient === 'function') {
               renderGradient();
             }
+            // Start animation back to normal size
+            const releasedIndex = this.dragIndex;
+            this.previousDragIndex = releasedIndex;
+            this.dragIndex = null;
+            this.animationStartTime = performance.now();
+            this.draw();
+            // Clear previousDragIndex after animation completes
+            setTimeout(() => {
+              if (this.dragIndex === null && this.previousDragIndex === releasedIndex) {
+                this.previousDragIndex = null;
+              }
+            }, this.animationDuration);
           }
-          this.dragIndex = null; 
         });
         
         // Helper to get active state
@@ -1309,20 +1371,41 @@
         const w = canvas.width;
         const h = canvas.height;
         ctx.clearRect(0, 0, w, h);
-        // grid
+        
+        // Handle size animation for active point
+        const now = performance.now();
+        
+        // Calculate animation progress (0 to 1)
+        let animationProgress = 1; // Default to fully animated
+        if (this.animationStartTime !== null) {
+          const elapsed = now - this.animationStartTime;
+          animationProgress = Math.min(1, elapsed / this.animationDuration);
+          // If animation is still in progress, request another frame
+          if (animationProgress < 1) {
+            requestAnimationFrame(() => this.draw(isActiveOverride));
+          } else {
+            // Animation complete, clear start time
+            this.animationStartTime = null;
+          }
+        }
+        // grid (50px squares)
         ctx.strokeStyle = 'rgba(75, 85, 99, 0.4)';
         ctx.lineWidth = 1;
         ctx.setLineDash([2, 4]);
-        for (let i = 1; i < 6; i++) {
-          const x = (w / 6) * i;
-          const y = (h / 6) * i;
-          if (this.orientation === 'horizontal') {
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-          } else {
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-          }
+        const gridSize = 50;
+        // Draw vertical lines
+        for (let x = gridSize; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        // Draw horizontal lines
+        for (let y = gridSize; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
         }
         ctx.setLineDash([]);
         // curve - check if this is the active curve
@@ -1361,22 +1444,20 @@
             if (i === 0) path.moveTo(px, py); else path.lineTo(px, py);
           }
           
-          // Draw black outline first (6px) - this creates the outer border
-          ctx.strokeStyle = '#000000';
-          ctx.lineWidth = 6;
-          ctx.stroke(path);
-          
-          // Draw white stroke on top (4px) - this covers the center, leaving 1px black on each side
+          // Draw white stroke with glow effect
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
           ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 4;
           ctx.stroke(path);
+          ctx.shadowBlur = 0;
           ctx.restore();
         } else {
-          // Inactive curve: dashed, 50% transparent gray
+          // Inactive curve: dashed, 50% transparent white
           ctx.save();
           ctx.globalCompositeOperation = 'source-over';
           ctx.setLineDash([4, 4]);
-          ctx.strokeStyle = 'rgba(128, 128, 128, 0.5)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.lineWidth = 3;
         ctx.beginPath();
         const samples = 200;
@@ -1423,17 +1504,65 @@
         // points
         ctx.save();
         ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1.0;
-        this.points.forEach(pt => {
-          const px = this.orientation === 'horizontal' ? pt.t * w : pt.v * w;
-          const py = this.orientation === 'horizontal' ? (1 - pt.v) * h : pt.t * h;
-          ctx.fillStyle = '#ffffff';
-          ctx.strokeStyle = '#4285f4';
-          ctx.lineWidth = 2;
+        this.points.forEach((pt, idx) => {
+          // Calculate padding in pixels
+          const paddingX = this.radius + this.pointPadding;
+          const paddingY = this.radius + this.pointPadding;
+          
+          // Clamp point positions to stay within canvas bounds with padding
+          const normalizedT = Math.min(1 - (paddingX / w), Math.max(paddingX / w, pt.t));
+          const normalizedV = Math.min(1 - (paddingY / h), Math.max(paddingY / h, pt.v));
+          
+          const px = this.orientation === 'horizontal' ? normalizedT * w : normalizedV * w;
+          const py = this.orientation === 'horizontal' ? (1 - normalizedV) * h : normalizedT * h;
+          const isPointActive = this.dragIndex === idx;
+          
+          if (!isActive) {
+            // Inactive curve: 50% transparent 3px white solid stroke (not dashed)
+            ctx.globalAlpha = 0.5;
+            ctx.setLineDash([]); // Ensure no dash
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.arc(px, py, this.radius, 0, Math.PI * 2);
-          ctx.fill();
           ctx.stroke();
+            ctx.globalAlpha = 1.0;
+          } else {
+            // Active curve: normal point styling
+            // Calculate animated size
+            let currentRadius = this.radius;
+            let currentGlow = 0;
+            const isAnimatingRelease = this.previousDragIndex === idx && this.dragIndex === null && this.animationStartTime !== null;
+            
+            if (isPointActive) {
+              // Active point: animate size from normal to 20% larger
+              const targetSize = this.radius * 1.2;
+              currentRadius = this.radius + (targetSize - this.radius) * animationProgress;
+              currentGlow = 12 * animationProgress; // Glow also animates
+            } else if (isAnimatingRelease) {
+              // Point was just released: animate back to normal size
+              const targetSize = this.radius * 1.2;
+              currentRadius = targetSize - (targetSize - this.radius) * animationProgress;
+              currentGlow = 12 * (1 - animationProgress);
+            }
+            
+            if (isPointActive || isAnimatingRelease) {
+              // Active point or point being released: white glow effect
+              ctx.shadowBlur = currentGlow;
+              ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.arc(px, py, currentRadius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            } else {
+              // Non-active point: just white, no glow
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.arc(px, py, currentRadius, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
         });
         ctx.restore();
       }
@@ -2145,11 +2274,11 @@
     // Randomize
     const randomBtn = document.getElementById('randomBtn');
     randomBtn.addEventListener('click', () => {
-      // Reset animation if already playing
+      // Remove animating class if present to reset
       randomBtn.classList.remove('animating');
-      // Force reflow to restart animation
+      // Force immediate reflow to restart animation
       void randomBtn.offsetWidth;
-      // Start animation
+      // Start animation immediately
       randomBtn.classList.add('animating');
       // Remove class after animation completes
       setTimeout(() => {
