@@ -39,7 +39,7 @@
 
     body {
       margin: 0;
-      background: #0f1116;
+      background: #0d0d0d;
       min-height: 100vh;
       overflow: auto;
       font-family: inherit;
@@ -81,7 +81,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0f1116;
+      background: #0d0d0d;
       position: relative;
       overflow: hidden;
     }
@@ -281,6 +281,10 @@
       gap: 6px;
     }
 
+    #ditherAlgorithmButtons {
+      grid-template-columns: repeat(5, 1fr);
+    }
+
     .blend-btn {
       aspect-ratio: 1;
       border: 1px solid var(--input-border);
@@ -310,9 +314,52 @@
       color: #1a1a1a;
     }
 
+    .blend-btn.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .blend-btn.disabled:hover {
+      background: var(--input-bg);
+      border-color: var(--input-border);
+    }
+
     .blend-btn .material-icons,
     .blend-btn .material-symbols-outlined {
       font-size: 18px;
+    }
+
+    input:disabled,
+    input[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    input[type="range"]:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    input[type="range"]:disabled::-webkit-slider-thumb {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+
+    input[type="range"]:disabled::-moz-range-thumb {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+
+    label.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    label.disabled input,
+    label.disabled input[type="range"] {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .grid {
@@ -551,7 +598,7 @@
     .gradient-picker-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 4px;
     }
 
     .gradient-bar-container {
@@ -607,6 +654,33 @@
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 6px;
+      width: 100%;
+      margin-top: 4px;
+    }
+    
+    .gradient-controls-left {
+      display: contents;
+    }
+    
+    .gradient-controls-left .blend-btn:nth-child(1) {
+      grid-column: 1 / 2;
+    }
+    
+    .gradient-controls-left .blend-btn:nth-child(2) {
+      grid-column: 2 / 3;
+    }
+    
+    .gradient-controls-left .blend-btn:nth-child(3) {
+      grid-column: 3 / 4;
+    }
+    
+    .gradient-controls-right {
+      display: contents;
+    }
+    
+    .gradient-controls-right .blend-btn {
+      grid-column: 6 / 7;
+      justify-self: end;
     }
 
     .btn .material-icons,
@@ -765,11 +839,11 @@
         <div class="controls">
           <div style="display:flex; flex-direction:row; gap:12px; align-items:flex-start; width:100%;">
             <label style="margin:0; flex:1;">
-              Canvas width
+              Width
               <input type="number" id="widthInput" value="900" min="200" max="2000" style="width:100%;" />
           </label>
             <label style="margin:0; flex:1;">
-              Canvas height
+              Height
               <input type="number" id="heightInput" value="520" min="200" max="2000" style="width:100%;" />
           </label>
           </div>
@@ -816,18 +890,25 @@
             </div>
           </label>
         </div>
+        </div>
 
-
+      <div class="panel">
+        <h3>Colors</h3>
         <div class="gradient-picker-section">
-          <label style="margin-bottom:8px; display:block;">Gradient Colors</label>
-          <div class="gradient-bar-container">
+          <label style="display:block; margin-bottom:0;">Gradient Colors</label>
+          <div class="gradient-bar-container" style="margin-top:0;">
             <div class="gradient-bar" id="gradientBar"></div>
             <div class="gradient-stops" id="gradientStops"></div>
           </div>
           <div class="gradient-controls">
-            <button class="blend-btn" id="removeStopBtn" title="Remove Selected"><span class="material-icons">delete</span></button>
-            <button class="blend-btn" id="invertGradientBtn" title="Invert Gradient"><span class="material-icons">swap_horiz</span></button>
-            <button class="blend-btn" id="redistributeStopsBtn" title="Redistribute Stops Evenly"><span class="material-symbols-outlined">align_justify_space_even</span></button>
+            <div class="gradient-controls-left">
+              <button class="blend-btn" id="invertGradientBtn" title="Invert Gradient"><span class="material-icons">swap_horiz</span></button>
+              <button class="blend-btn" id="redistributeStopsBtn" title="Redistribute Stops Evenly"><span class="material-symbols-outlined">align_justify_space_even</span></button>
+              <button class="blend-btn" id="shuffleColorsBtn" title="Shuffle Colors"><span class="material-icons">shuffle</span></button>
+            </div>
+            <div class="gradient-controls-right">
+              <button class="blend-btn" id="removeStopBtn" title="Remove Selected"><span class="material-icons">delete</span></button>
+            </div>
           </div>
           <div class="color-picker-container" style="margin-top:12px;">
             <div class="color-preview" id="colorPreview" style="background:#ff595e;"></div>
@@ -843,19 +924,19 @@
             <div class="hue-marker" id="hueMarker"></div>
           </div>
           </div>
-          <div style="margin-top:12px; display:flex; flex-direction:row; gap:12px; align-items:flex-start;">
-            <label style="font-size:11px; margin:0; flex:0 0 auto;">
+          <div style="margin-top:12px; display:flex; flex-direction:column; gap:12px;">
+            <label style="font-size:11px; margin:0;">
               Randomize colors
               <label class="ios-switch" style="margin-top:4px; display:block;">
                 <input type="checkbox" id="multiColorRandom" />
                 <span class="ios-switch-slider"></span>
               </label>
             </label>
-            <label style="font-size:11px; margin:0; flex:0.6;">
-              Colors
-              <div class="slider-with-input">
-                <input type="range" id="multiColorCountSlider" value="8" min="2" max="20" style="flex:0.6;" />
-                <input type="number" id="multiColorCount" value="8" min="2" max="20" step="1" style="width:45px; padding:4px 6px; font-size:12px;" />
+            <label style="font-size:11px; margin:0; width:100%;">
+              Amount of colors
+              <div class="slider-with-input" style="width:100%;">
+                <input type="range" id="multiColorCountSlider" value="8" min="2" max="20" style="flex:1; min-width:0; max-width:calc(100% - 60px);" />
+                <input type="number" id="multiColorCount" value="8" min="2" max="20" step="1" style="width:45px; padding:4px 6px; font-size:12px; flex-shrink:0;" />
               </div>
             </label>
           </div>
@@ -863,22 +944,27 @@
       </div>
 
 
-      <div class="grid">
         <div class="panel">
-          <h3>Dither</h3>
-          <div class="row" style="margin-bottom: 8px;">
-            <label style="font-size:11px; gap:8px; align-items:center;" class="row">
-              <span>Enable dithering</span>
-              <label class="ios-switch">
-                <input type="checkbox" id="ditherEnabled" />
-                <span class="ios-switch-slider"></span>
+        <h3>Dither</h3>
+        <div class="controls">
+          <div style="margin-bottom: 8px;">
+            <label style="font-size:11px; display:block; margin-bottom:4px;">Enable dithering</label>
+            <label class="ios-switch" style="display:block;">
+              <input type="checkbox" id="ditherEnabled" />
+              <span class="ios-switch-slider"></span>
             </label>
-            </label>
-          </div>
+              </div>
           <label>
             Algorithm
-            <select id="ditherAlgorithm" style="width:100%;">
-              <option value="floyd-steinberg">Floyd-Steinberg</option>
+            <div class="blend-mode-buttons" id="ditherAlgorithmButtons">
+              <button class="blend-btn" data-algorithm="floyd-steinberg" title="Floyd-Steinberg"><span class="material-icons">grid_on</span></button>
+              <button class="blend-btn" data-algorithm="ordered" title="Ordered (Bayer)"><span class="material-icons">view_module</span></button>
+              <button class="blend-btn" data-algorithm="atkinson" title="Atkinson"><span class="material-icons">apps</span></button>
+              <button class="blend-btn" data-algorithm="stucki" title="Stucki"><span class="material-icons">dashboard</span></button>
+              <button class="blend-btn" data-algorithm="burkes" title="Burkes"><span class="material-icons">view_quilt</span></button>
+            </div>
+            <select id="ditherAlgorithm" style="display:none;">
+              <option value="floyd-steinberg" selected>Floyd-Steinberg</option>
               <option value="ordered">Ordered (Bayer)</option>
               <option value="atkinson">Atkinson</option>
               <option value="stucki">Stucki</option>
@@ -893,8 +979,7 @@
           </div>
             <span class="note" style="font-size:11px; margin-top:4px;">Number of color levels (2-256)</span>
             </label>
-          </div>
-
+        </div>
       </div>
 
     </div>
@@ -1308,15 +1393,6 @@
     const gctx = gradientCanvas.getContext('2d');
     const xEditor = new CurveEditor(document.getElementById('xCurveCanvas'), 'horizontal', 'x');
     const yEditor = new CurveEditor(document.getElementById('yCurveCanvas'), 'vertical', 'y');
-    
-    // Initialize curves with random values (3-5 points each)
-    const randomSeed = Math.floor(Math.random() * 1000000);
-    const tempRNG = new SeededRNG(randomSeed);
-    const xComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
-    const yComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
-    xEditor.randomize(tempRNG, xComplexity);
-    yEditor.randomize(tempRNG, yComplexity);
-    
     const widthInput = document.getElementById('widthInput');
     const heightInput = document.getElementById('heightInput');
     const blendMode = document.getElementById('blendMode');
@@ -1380,11 +1456,98 @@
     });
     
     // Dither controls
+    const ditherAlgorithmButtons = document.getElementById('ditherAlgorithmButtons');
+    
+    function updateDitherAlgorithmButtons() {
+      if (ditherAlgorithmButtons) {
+        const buttons = ditherAlgorithmButtons.querySelectorAll('.blend-btn');
+        if (ditherEnabled.checked) {
+          // Show active state based on current algorithm
+          buttons.forEach(b => {
+            b.classList.remove('disabled');
+            b.classList.toggle('active', b.dataset.algorithm === ditherAlgorithm.value);
+          });
+        } else {
+          // Remove active state and add disabled state when dither is disabled
+          buttons.forEach(b => {
+            b.classList.remove('active');
+            b.classList.add('disabled');
+          });
+        }
+        
+        // Grey out the Algorithm label container
+        const algorithmContainer = ditherAlgorithmButtons.closest('label');
+        if (algorithmContainer) {
+          if (ditherEnabled.checked) {
+            algorithmContainer.classList.remove('disabled');
+          } else {
+            algorithmContainer.classList.add('disabled');
+          }
+        }
+      }
+      
+      // Update levels slider and input
+      if (ditherLevelsSlider) {
+        ditherLevelsSlider.disabled = !ditherEnabled.checked;
+        // Grey out the label container
+        const levelsContainer = ditherLevelsSlider.closest('label');
+        if (levelsContainer) {
+          if (ditherEnabled.checked) {
+            levelsContainer.classList.remove('disabled');
+          } else {
+            levelsContainer.classList.add('disabled');
+          }
+        }
+      }
+      if (ditherLevels) {
+        ditherLevels.disabled = !ditherEnabled.checked;
+      }
+    }
+
+    function updateColorCountControls() {
+      const isEnabled = multiColorRandom.checked;
+      if (multiColorCountSlider) {
+        multiColorCountSlider.disabled = !isEnabled;
+        // Grey out the label container
+        const colorCountContainer = multiColorCountSlider.closest('label');
+        if (colorCountContainer) {
+          if (isEnabled) {
+            colorCountContainer.classList.remove('disabled');
+          } else {
+            colorCountContainer.classList.add('disabled');
+          }
+        }
+      }
+      if (multiColorCount) {
+        multiColorCount.disabled = !isEnabled;
+      }
+    }
+    
     ditherEnabled.addEventListener('change', () => {
+      updateDitherAlgorithmButtons();
       renderGradient();
     });
     
+    // Dither algorithm buttons
+    if (ditherAlgorithmButtons) {
+      // Initialize button states
+      updateDitherAlgorithmButtons();
+      
+      ditherAlgorithmButtons.querySelectorAll('.blend-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!ditherEnabled.checked) return; // Don't allow selection when dither is off
+          
+          const algorithm = btn.dataset.algorithm;
+          ditherAlgorithm.value = algorithm;
+          updateDitherAlgorithmButtons();
+          renderGradient();
+        });
+      });
+    }
+    
+    // Sync dither algorithm select with buttons
     ditherAlgorithm.addEventListener('change', () => {
+      updateDitherAlgorithmButtons();
       if (ditherEnabled.checked) {
         renderGradient();
       }
@@ -1461,9 +1624,11 @@
     // Seeded RNG for reproducible randomization
     const seededRNG = new SeededRNG(0);
 
-    // Set max points based on the random complexity we just generated
-    xEditor.setMaxPoints(xComplexity);
-    yEditor.setMaxPoints(yComplexity);
+    // Initialize complexity - fixed defaults: X = 4, Y = 3
+    const initXComplexity = 4;
+    const initYComplexity = 3;
+    xEditor.setMaxPoints(initXComplexity);
+    yEditor.setMaxPoints(initYComplexity);
 
     // When multi-color random is used, this holds an array of RGB colors.
     let activePalette = null;
@@ -1477,6 +1642,8 @@
     if (multiColorCount) {
       multiColorCount.value = 5;
     }
+    // Initialize disabled state for color count controls
+    updateColorCountControls();
     let curvesVisible = true;
     let activeCurve = 'x'; // 'x' or 'y'
 
@@ -1601,18 +1768,13 @@
       
       // Use gradient stops
       const stops = gradientStopsArray.sort((a, b) => a.position - b.position);
-      if (stops.length === 0) return { r: 128, g: 128, b: 128 };
-      
-      // Handle edge cases
       if (t <= stops[0].position) return stops[0].color;
       if (t >= stops[stops.length - 1].position) return stops[stops.length - 1].color;
       
-      // Interpolate between stops
       for (let i = 0; i < stops.length - 1; i++) {
         const s1 = stops[i];
         const s2 = stops[i + 1];
-        // Use >= and < to ensure we catch values at the boundary
-        if (t >= s1.position && t < s2.position) {
+        if (t >= s1.position && t <= s2.position) {
           const localT = (t - s1.position) / (s2.position - s1.position);
           return {
             r: lerp(s1.color.r, s2.color.r, localT),
@@ -1621,10 +1783,7 @@
           };
         }
       }
-      
-      // Fallback: if we somehow didn't match, return the last stop's color
-      // This ensures the purple color is always accessible
-      return stops[stops.length - 1].color;
+      return stops[0].color;
     }
 
     function renderGradient() {
@@ -2026,80 +2185,73 @@
 
     // Gradient stop management
     function renderGradientBar() {
-      // Sort stops by position with stable sort (preserve original order when positions are equal)
-      const stopsWithIndex = gradientStopsArray.map((stop, idx) => ({ stop, originalIndex: idx }));
-      stopsWithIndex.sort((a, b) => {
-        const posDiff = a.stop.position - b.stop.position;
-        // If positions are very close (within 0.001), maintain original order
-        if (Math.abs(posDiff) < 0.001) {
-          return a.originalIndex - b.originalIndex;
-        }
-        return posDiff;
-      });
-      const stops = stopsWithIndex.map(item => item.stop);
-      
+      // Sort stops by position (create new array to avoid mutating original)
+      const stops = [...gradientStopsArray].sort((a, b) => a.position - b.position);
       const gradientStr = stops.map(s => {
         const hex = rgbToHex(s.color.r, s.color.g, s.color.b);
         return `${hex} ${s.position * 100}%`;
       }).join(', ');
       gradientBar.style.background = `linear-gradient(to right, ${gradientStr})`;
       
-      // Get or create stop elements - use a map to track by ID
-      const stopElementsMap = new Map();
-      const existingElements = gradientStops.querySelectorAll('.gradient-stop');
-      existingElements.forEach(el => {
-        const stopId = parseInt(el.dataset.stopId || el.dataset.index);
-        // Try to find the stop by ID
-        const stop = gradientStopsArray.find(s => s.id === stopId);
-        if (stop) {
-          stopElementsMap.set(stop.id, el);
-        }
-      });
-      
-      // Update or create stop elements
+      // Update stop elements efficiently
+      const stopElements = gradientStops.querySelectorAll('.gradient-stop');
       stops.forEach((stop, sortedIndex) => {
         // Find original index in unsorted array using unique ID
-        const index = gradientStopsArray.findIndex(s => s.id === stop.id);
-        if (index === -1) return; // Skip if stop not found
+        let index = gradientStopsArray.findIndex(s => s.id === stop.id);
         
-        // Get or create element
-        let stopEl = stopElementsMap.get(stop.id);
-        if (!stopEl) {
-          stopEl = document.createElement('div');
-          stopEl.className = 'gradient-stop';
-          stopEl.dataset.stopId = stop.id;
-          gradientStops.appendChild(stopEl);
-          stopElementsMap.set(stop.id, stopEl);
+        // Fallback: if ID matching fails, try to match by position and color
+        if (index === -1) {
+          index = gradientStopsArray.findIndex(s => 
+            s.position === stop.position && 
+            s.color.r === stop.color.r && 
+            s.color.g === stop.color.g && 
+            s.color.b === stop.color.b
+          );
+        }
+        
+        // If still not found, use sortedIndex as fallback (shouldn't happen)
+        if (index === -1) {
+          index = sortedIndex;
         }
         
         // Calculate transform to prevent overflow at edges
+        // Stop is 24px wide, so 12px on each side
+        // At position 0, we want left edge at 0%, so translateX should be 0 instead of -50%
+        // At position 1, we want right edge at 100%, so translateX should be -100% instead of -50%
         const isLeftmost = sortedIndex === 0;
         const isRightmost = sortedIndex === stops.length - 1;
         let transformX = '-50%';
         if (isLeftmost && stop.position <= 0.01) {
-          transformX = '0%';
+          transformX = '0%'; // Leftmost stop - align left edge
         } else if (isRightmost && stop.position >= 0.99) {
-          transformX = '-100%';
+          transformX = '-100%'; // Rightmost stop - align right edge
         }
         
-        // Update element properties
-        stopEl.style.left = (stop.position * 100) + '%';
-        stopEl.style.transform = `translate(${transformX}, -50%)`;
-        stopEl.style.setProperty('--stop-transform-x', transformX);
-        stopEl.className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
-        stopEl.dataset.index = index;
-        stopEl.dataset.stopId = stop.id;
-        stopEl.style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
-      });
-      
-      // Remove excess elements that don't correspond to any stop
-      const validIds = new Set(gradientStopsArray.map(s => s.id));
-      existingElements.forEach(el => {
-        const stopId = parseInt(el.dataset.stopId || el.dataset.index);
-        if (!validIds.has(stopId)) {
-          el.remove();
+        if (stopElements[sortedIndex]) {
+          // Update existing element
+          stopElements[sortedIndex].style.left = (stop.position * 100) + '%';
+          stopElements[sortedIndex].style.transform = `translate(${transformX}, -50%)`;
+          stopElements[sortedIndex].style.setProperty('--stop-transform-x', transformX);
+          stopElements[sortedIndex].className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
+          stopElements[sortedIndex].dataset.index = index;
+          stopElements[sortedIndex].style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
+        } else {
+          // Create new element if needed
+          const stopEl = document.createElement('div');
+          stopEl.className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
+          stopEl.style.left = (stop.position * 100) + '%';
+          stopEl.style.transform = `translate(${transformX}, -50%)`;
+          stopEl.style.setProperty('--stop-transform-x', transformX);
+          stopEl.style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
+          stopEl.dataset.index = index;
+          gradientStops.appendChild(stopEl);
         }
       });
+      
+      // Remove excess elements if stops were removed
+      while (stopElements.length > stops.length) {
+        gradientStops.removeChild(stopElements[stopElements.length - 1]);
+      }
     }
 
     function selectStop(index) {
@@ -2329,21 +2481,26 @@
 
 
     // Gradient stop interactions
-    let isPointerDown = false;
-    let hasMoved = false;
-    let draggingStop = null;
-    let renderGradientTimeout = null;
-    let originalStopPositions = null;
-    let pointerDownX = null;
+    let wasDragging = false; // Track if we just finished dragging
+    const gradientBarContainer = document.querySelector('.gradient-bar-container');
     
-    // Prevent adding stops during pointer interactions
-    document.querySelector('.gradient-bar-container').addEventListener('click', (e) => {
-      // Don't add stop if pointer was down (could be from drag)
-      if (isPointerDown || hasMoved) {
+    // Prevent pointerdown on container from interfering with stop dragging
+    gradientBarContainer.addEventListener('pointerdown', (e) => {
+      // If clicking on a stop, let the stop handle it - don't interfere
+      if (e.target.classList.contains('gradient-stop') || e.target.closest('.gradient-stop')) {
+        // Don't prevent default or stop propagation - let the stop's handler take over
+        return;
+      }
+    });
+    
+    gradientBarContainer.addEventListener('click', (e) => {
+      // Don't add stop if we just finished dragging a stop
+      if (wasDragging) {
+        wasDragging = false;
         return;
       }
       // Only add stop if clicking on the gradient bar itself, not on a stop
-      if (!e.target.classList.contains('gradient-stop')) {
+      if (!e.target.classList.contains('gradient-stop') && !e.target.closest('.gradient-stop')) {
         const rect = gradientBar.getBoundingClientRect();
         const position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         addStop(position);
@@ -2351,30 +2508,28 @@
     });
 
     gradientStops.addEventListener('click', (e) => {
-      // Don't select if we just finished dragging
-      if (hasMoved) {
-        return;
-      }
       if (e.target.classList.contains('gradient-stop')) {
-        // Try to get index from dataset, fallback to finding by stopId
-        let index = parseInt(e.target.dataset.index);
-        if (isNaN(index) && e.target.dataset.stopId) {
-          const stopId = parseInt(e.target.dataset.stopId);
-          index = gradientStopsArray.findIndex(s => s.id === stopId);
-        }
-        if (!isNaN(index) && index >= 0) {
-          selectStop(index);
-        }
+        const index = parseInt(e.target.dataset.index);
+        selectStop(index);
       }
     });
 
     // Drag stops
+    let draggingStop = null;
+    let renderGradientTimeout = null;
+    let originalStopPositions = null; // Store original positions when drag starts
+    
     gradientStops.addEventListener('pointerdown', (e) => {
-      if (e.target.classList.contains('gradient-stop')) {
+      // Check if clicking on a stop or any child element
+      const stopElement = e.target.classList.contains('gradient-stop') 
+        ? e.target 
+        : e.target.closest('.gradient-stop');
+      
+      if (stopElement) {
         // Try to get index from dataset, fallback to finding by stopId
-        let index = parseInt(e.target.dataset.index);
-        if (isNaN(index) && e.target.dataset.stopId) {
-          const stopId = parseInt(e.target.dataset.stopId);
+        let index = parseInt(stopElement.dataset.index);
+        if (isNaN(index) && stopElement.dataset.stopId) {
+          const stopId = parseInt(stopElement.dataset.stopId);
           index = gradientStopsArray.findIndex(s => s.id === stopId);
         }
         if (isNaN(index) || index < 0) return;
@@ -2388,27 +2543,28 @@
         
         draggingStop = {
           index: index,
-          element: e.target,
+          element: stopElement,
           stopId: gradientStopsArray[index].id
         };
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation(); // Prevent any other handlers from running
         
         // Store original positions of all stops to prevent them from moving
         originalStopPositions = gradientStopsArray.map((stop, idx) => ({
           index: idx,
-          position: stop.position,
-          id: stop.id
+          position: stop.position
         }));
         
         // Disable pointer events on all other stops while dragging
+        // This allows the dragged stop to pass over other stops
         const allStops = gradientStops.querySelectorAll('.gradient-stop');
         allStops.forEach((stop) => {
-          const stopId = parseInt(stop.dataset.stopId || stop.dataset.index);
-          const stopIndex = gradientStopsArray.findIndex(s => s.id === stopId);
+          const stopIndex = parseInt(stop.dataset.index);
           if (stopIndex !== index) {
             stop.style.pointerEvents = 'none';
           } else {
+            // Bring dragged stop to front with higher z-index
             stop.style.zIndex = '1000';
           }
         });
@@ -2416,7 +2572,7 @@
     });
 
     window.addEventListener('pointermove', (e) => {
-      if (isPointerDown && draggingStop) {
+      if (isPointerDown && draggingStop && originalStopPositions) {
         // Check if mouse actually moved (more than 3px)
         if (!hasMoved && pointerDownX !== null) {
           if (Math.abs(e.clientX - pointerDownX) > 3) {
@@ -2424,13 +2580,13 @@
           }
         }
         
-        if (hasMoved && originalStopPositions && draggingStop.stopId) {
-          const rect = gradientBar.getBoundingClientRect();
-          let position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-          
+        if (hasMoved && draggingStop.stopId) {
           // Find the dragged stop by ID (not index, to ensure we get the right one)
           const draggedStop = gradientStopsArray.find(s => s.id === draggingStop.stopId);
           if (!draggedStop) return;
+          
+          const rect = gradientBar.getBoundingClientRect();
+          let position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
           
           // Constrain position to avoid overlapping with other stops (minimum distance)
           const minDistance = 0.01; // 1% minimum distance
@@ -2467,32 +2623,29 @@
           // Update ONLY the dragged stop's position (never touch color)
           draggedStop.position = position;
           
-          // Update gradient bar immediately (this will also update the selected stop visual)
+          // Update gradient bar immediately for smooth visual feedback
           renderGradientBar();
           
-          // Throttle gradient rendering
+          // Throttle gradient rendering during drag for performance
           if (renderGradientTimeout) {
             clearTimeout(renderGradientTimeout);
           }
           renderGradientTimeout = setTimeout(() => {
             renderGradient();
-          }, 16);
+          }, 16); // ~60fps throttling
         }
       }
     });
 
     window.addEventListener('pointerup', (e) => {
-      if (isPointerDown) {
+      if (draggingStop) {
         // Clear any pending render
         if (renderGradientTimeout) {
           clearTimeout(renderGradientTimeout);
           renderGradientTimeout = null;
         }
-        
-        if (hasMoved && draggingStop) {
-          // Final render on release after drag
-          renderGradient();
-        }
+        // Final render on release
+        renderGradient();
         
         // Re-enable pointer events on all stops
         const allStops = gradientStops.querySelectorAll('.gradient-stop');
@@ -2501,14 +2654,16 @@
           stop.style.zIndex = '';
         });
         
-        // Reset flags after a short delay to prevent click events
+        // Mark that we were dragging to prevent click handler from adding stops
+        wasDragging = true;
+        // Clear the flag after a short delay to allow click events to be processed first
         setTimeout(() => {
-          isPointerDown = false;
-          hasMoved = false;
-          draggingStop = null;
-          originalStopPositions = null;
-          pointerDownX = null;
-        }, 50);
+          wasDragging = false;
+        }, 100);
+        
+        // Clear original positions
+        originalStopPositions = null;
+        draggingStop = null;
       }
     });
 
@@ -2538,15 +2693,43 @@
       gradientStopsArray.sort((a, b) => a.position - b.position);
       // Redistribute positions evenly
       const count = gradientStopsArray.length;
+      if (count > 1) {
+        gradientStopsArray.forEach((stop, i) => {
+          stop.position = i / (count - 1);
+        });
+        renderGradientBar();
+        renderGradient();
+      }
+    });
+
+    // Shuffle colors between stops
+    function shuffleColors() {
+      // Create an array of all colors
+      const colors = gradientStopsArray.map(stop => ({ ...stop.color }));
+      
+      // Shuffle the colors array using Fisher-Yates algorithm
+      for (let i = colors.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [colors[i], colors[j]] = [colors[j], colors[i]];
+      }
+      
+      // Assign shuffled colors back to stops (keeping positions the same)
       gradientStopsArray.forEach((stop, i) => {
-        stop.position = i / (count - 1);
+        stop.color = colors[i];
       });
+      
       renderGradientBar();
       renderGradient();
+    }
+
+    const shuffleColorsBtn = document.getElementById('shuffleColorsBtn');
+    shuffleColorsBtn.addEventListener('click', () => {
+      shuffleColors();
     });
 
     // Randomize colors checkbox and count input handlers
     multiColorRandom.addEventListener('change', () => {
+      updateColorCountControls();
       if (multiColorRandom.checked) {
         // Generate random seed for colors
         const seed = Math.floor(Math.random() * 1000000);
@@ -2572,40 +2755,41 @@
       } else {
         // When randomize is not checked, adjust stop count without randomizing colors
         const currentCount = gradientStopsArray.length;
-        if (count < currentCount) {
-          // Remove excess stops from middle, keeping first and last
-          while (gradientStopsArray.length > count) {
-            const toRemove = Math.floor(gradientStopsArray.length / 2);
-            if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
-              gradientStopsArray.splice(toRemove, 1);
-            } else {
-              break; // Safety break
+        if (count !== currentCount) {
+          if (count < currentCount) {
+            // Remove excess stops from middle, keeping first and last
+            while (gradientStopsArray.length > count) {
+              const toRemove = Math.floor(gradientStopsArray.length / 2);
+              if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
+                gradientStopsArray.splice(toRemove, 1);
+              } else {
+                break; // Safety break
+              }
+            }
+          } else if (count > currentCount) {
+            // Add stops evenly distributed with interpolated colors
+            while (gradientStopsArray.length < count) {
+              const newIndex = gradientStopsArray.length;
+              const position = newIndex / (count - 1);
+              const col = getColorFromGradient(position);
+              gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
             }
           }
+          
           // Update selected stop index if needed
           if (selectedStopIndex >= gradientStopsArray.length) {
             selectedStopIndex = gradientStopsArray.length - 1;
           }
+          
           // Redistribute positions evenly
           gradientStopsArray.sort((a, b) => a.position - b.position);
-          gradientStopsArray.forEach((stop, i) => {
-            stop.position = i / (count - 1);
-          });
-          renderGradientBar();
-          renderGradient();
-        } else if (count > currentCount) {
-          // Add stops evenly distributed with interpolated colors
-          while (gradientStopsArray.length < count) {
-            const newIndex = gradientStopsArray.length;
-            const position = newIndex / (count - 1);
-            const col = getColorFromGradient(position);
-            gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
+          const finalCount = gradientStopsArray.length;
+          if (finalCount > 1) {
+            gradientStopsArray.forEach((stop, i) => {
+              stop.position = i / (finalCount - 1);
+            });
           }
-          // Redistribute positions evenly
-          gradientStopsArray.sort((a, b) => a.position - b.position);
-          gradientStopsArray.forEach((stop, i) => {
-            stop.position = i / (count - 1);
-          });
+          
           renderGradientBar();
           renderGradient();
         }
@@ -2629,40 +2813,41 @@
       } else {
         // When randomize is not checked, adjust stop count without randomizing colors
         const currentCount = gradientStopsArray.length;
-        if (count < currentCount) {
-          // Remove excess stops from middle, keeping first and last
-          while (gradientStopsArray.length > count) {
-            const toRemove = Math.floor(gradientStopsArray.length / 2);
-            if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
-              gradientStopsArray.splice(toRemove, 1);
-            } else {
-              break; // Safety break
+        if (count !== currentCount) {
+          if (count < currentCount) {
+            // Remove excess stops from middle, keeping first and last
+            while (gradientStopsArray.length > count) {
+              const toRemove = Math.floor(gradientStopsArray.length / 2);
+              if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
+                gradientStopsArray.splice(toRemove, 1);
+              } else {
+                break; // Safety break
+              }
+            }
+          } else if (count > currentCount) {
+            // Add stops evenly distributed with interpolated colors
+            while (gradientStopsArray.length < count) {
+              const newIndex = gradientStopsArray.length;
+              const position = newIndex / (count - 1);
+              const col = getColorFromGradient(position);
+              gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
             }
           }
+          
           // Update selected stop index if needed
           if (selectedStopIndex >= gradientStopsArray.length) {
             selectedStopIndex = gradientStopsArray.length - 1;
           }
+          
           // Redistribute positions evenly
           gradientStopsArray.sort((a, b) => a.position - b.position);
-          gradientStopsArray.forEach((stop, i) => {
-            stop.position = i / (count - 1);
-          });
-          renderGradientBar();
-          renderGradient();
-        } else if (count > currentCount) {
-          // Add stops evenly distributed with interpolated colors
-          while (gradientStopsArray.length < count) {
-            const newIndex = gradientStopsArray.length;
-            const position = newIndex / (count - 1);
-            const col = getColorFromGradient(position);
-            gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
+          const finalCount = gradientStopsArray.length;
+          if (finalCount > 1) {
+            gradientStopsArray.forEach((stop, i) => {
+              stop.position = i / (finalCount - 1);
+            });
           }
-          // Redistribute positions evenly
-          gradientStopsArray.sort((a, b) => a.position - b.position);
-          gradientStopsArray.forEach((stop, i) => {
-            stop.position = i / (count - 1);
-          });
+          
           renderGradientBar();
           renderGradient();
         }
