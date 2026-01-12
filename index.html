@@ -136,6 +136,7 @@
       background: #f5f5f5;
       color: #1a1a1a;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      font-weight: 700;
     }
 
     #randomBtn:hover {
@@ -925,13 +926,10 @@
           </div>
           </div>
           <div style="margin-top:12px; display:flex; flex-direction:column; gap:12px;">
-            <label style="font-size:11px; margin:0;">
-              Randomize colors
-              <label class="ios-switch" style="margin-top:4px; display:block;">
-                <input type="checkbox" id="multiColorRandom" />
-                <span class="ios-switch-slider"></span>
-              </label>
-            </label>
+            <button class="blend-btn" id="randomizeColorsBtn" title="Randomize Colors" style="width:100%; aspect-ratio: auto; height: auto; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span class="material-icons" style="font-size:18px;">shuffle</span>
+              <span style="font-size:12px;">Randomize Colors</span>
+            </button>
             <label style="font-size:11px; margin:0; width:100%;">
               Amount of colors
               <div class="slider-with-input" style="width:100%;">
@@ -1001,7 +999,7 @@
     <button class="btn secondary" id="invertCurveBtn"
       style="padding:8px 12px; font-size:13px;"><span class="material-icons">swap_horiz</span> Invert</button>
     <button class="toggle-btn on" id="toggleCurvesBtn" style="padding:8px 12px; font-size:13px; width:160px; flex-shrink:0;"><span class="material-icons">visibility</span> Curves visible</button>
-    <button class="toggle-btn" id="autoRandomSeedBtn" style="padding:8px 12px; font-size:13px;"><span class="material-icons">casino</span> Randomize Curves</button>
+    <button class="toggle-btn" id="randomizeCurvesBtn" style="padding:8px 12px; font-size:13px;"><span class="material-icons">casino</span> Randomize Curves</button>
   </div>
 
   <div class="floating-export">
@@ -1505,21 +1503,16 @@
     }
 
     function updateColorCountControls() {
-      const isEnabled = multiColorRandom.checked;
+      // Amount of colors slider is always active now
       if (multiColorCountSlider) {
-        multiColorCountSlider.disabled = !isEnabled;
-        // Grey out the label container
+        multiColorCountSlider.disabled = false;
         const colorCountContainer = multiColorCountSlider.closest('label');
         if (colorCountContainer) {
-          if (isEnabled) {
-            colorCountContainer.classList.remove('disabled');
-          } else {
-            colorCountContainer.classList.add('disabled');
-          }
+          colorCountContainer.classList.remove('disabled');
         }
       }
       if (multiColorCount) {
-        multiColorCount.disabled = !isEnabled;
+        multiColorCount.disabled = false;
       }
     }
     
@@ -1616,11 +1609,10 @@
     const editXBtn = document.getElementById('editXBtn');
     const editYBtn = document.getElementById('editYBtn');
     const invertCurveBtn = document.getElementById('invertCurveBtn');
-    const multiColorRandom = document.getElementById('multiColorRandom');
+    const randomizeColorsBtn = document.getElementById('randomizeColorsBtn');
     const multiColorCount = document.getElementById('multiColorCount');
     const multiColorCountSlider = document.getElementById('multiColorCountSlider');
-    const autoRandomSeedBtn = document.getElementById('autoRandomSeedBtn');
-    let autoRandomSeed = false; // Track state
+    const randomizeCurvesBtn = document.getElementById('randomizeCurvesBtn');
     // Seeded RNG for reproducible randomization
     const seededRNG = new SeededRNG(0);
 
@@ -1633,16 +1625,14 @@
     // When multi-color random is used, this holds an array of RGB colors.
     let activePalette = null;
     
-    // Disable randomize colors checkbox by default
-    multiColorRandom.checked = false;
     // Set default color count to 8
     if (multiColorCountSlider) {
       multiColorCountSlider.value = 8;
     }
     if (multiColorCount) {
-      multiColorCount.value = 5;
+      multiColorCount.value = 8;
     }
-    // Initialize disabled state for color count controls
+    // Initialize color count controls (always enabled)
     updateColorCountControls();
     let curvesVisible = true;
     let activeCurve = 'x'; // 'x' or 'y'
@@ -1664,9 +1654,17 @@
       }
     });
 
-    autoRandomSeedBtn.addEventListener('click', () => {
-      autoRandomSeed = !autoRandomSeed;
-      autoRandomSeedBtn.classList.toggle('on', autoRandomSeed);
+    // Randomize curves button - randomize on click
+    randomizeCurvesBtn.addEventListener('click', () => {
+      const seed = Math.floor(Math.random() * 1000000);
+      seededRNG.setSeed(seed);
+      const xComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+      const yComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+      xEditor.randomize(seededRNG, xComplexity);
+      yEditor.randomize(seededRNG, yComplexity);
+      xEditor.setMaxPoints(xComplexity);
+      yEditor.setMaxPoints(yComplexity);
+      renderGradient();
     });
 
     // Determine which editor is active
@@ -2093,29 +2091,79 @@
     // Randomize
     // Randomize
     document.getElementById('randomBtn').addEventListener('click', () => {
-      // Generate random seed for curves if "Randomize Curves" is checked
-      if (autoRandomSeed) {
-        const seed = Math.floor(Math.random() * 1000000);
-      seededRNG.setSeed(seed);
-        // Fixed complexity: X = 4, Y = 3
-        xEditor.randomize(seededRNG, 4);
-        yEditor.randomize(seededRNG, 3);
+      // STEP 1: Set amount of colors FIRST (3-11)
+      const colorCount = Math.floor(Math.random() * 9) + 3; // 3 to 11
+      multiColorCount.value = colorCount;
+      multiColorCountSlider.value = colorCount;
+      
+      // Adjust stop count to match the new count
+      const currentCount = gradientStopsArray.length;
+      if (colorCount !== currentCount) {
+        // Sort by position first to ensure we keep the right stops
+        gradientStopsArray.sort((a, b) => a.position - b.position);
+        
+        if (colorCount < currentCount) {
+          // Keep first 'colorCount' stops, remove the rest
+          gradientStopsArray.splice(colorCount);
+        } else if (colorCount > currentCount) {
+          // Add stops evenly distributed with interpolated colors
+          while (gradientStopsArray.length < colorCount) {
+            const newIndex = gradientStopsArray.length;
+            const position = newIndex / (colorCount - 1);
+            const col = getColorFromGradient(position);
+            gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
+          }
+        }
+        
+        // Update selected stop index if needed
+        if (selectedStopIndex >= gradientStopsArray.length) {
+          selectedStopIndex = Math.max(0, gradientStopsArray.length - 1);
+        }
+        
+        // Redistribute positions evenly
+        const finalCount = gradientStopsArray.length;
+        if (finalCount > 1) {
+          gradientStopsArray.forEach((stop, i) => {
+            stop.position = i / (finalCount - 1);
+          });
+        } else if (finalCount === 1) {
+          gradientStopsArray[0].position = 0;
+        }
       }
 
-      // Handle color randomization - randomize colors if checkbox is checked
-      // This works independently of autoRandomSeed checkbox
-      if (multiColorRandom.checked) {
-        // Always generate a fresh random seed for colors on each click
-        // This ensures colors randomize every time, regardless of autoRandomSeed setting
-        const colorSeed = Math.floor(Math.random() * 1000000);
-        seededRNG.setSeed(colorSeed);
-        randomizeGradientStops();
-      }
+      // STEP 2: Randomize curves
+      const curveSeed = Math.floor(Math.random() * 1000000);
+      seededRNG.setSeed(curveSeed);
+      const xComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+      const yComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+      xEditor.randomize(seededRNG, xComplexity);
+      yEditor.randomize(seededRNG, yComplexity);
+      xEditor.setMaxPoints(xComplexity);
+      yEditor.setMaxPoints(yComplexity);
+
+      // STEP 3: Randomize colors (now that count is set)
+      const colorSeed = Math.floor(Math.random() * 1000000);
+      seededRNG.setSeed(colorSeed);
+      randomizeGradientStops();
+
+      // STEP 4: Randomize noise (2-10)
+      const noiseValue = Math.floor(Math.random() * 9) + 2; // 2 to 10
+      noiseInput.value = noiseValue;
+      noiseValue.value = noiseValue;
+
+      // STEP 5: Randomize global blend mode
+      const blendModes = ['avg', 'mul', 'screen', 'overlay', 'softlight', 'hardlight', 'difference', 'exclusion', 'darken', 'lighten', 'colorburn', 'colordodge'];
+      const randomBlendMode = blendModes[Math.floor(Math.random() * blendModes.length)];
+      blendMode.value = randomBlendMode;
+      blendModeButtons.querySelectorAll('.blend-btn').forEach(b => {
+        b.classList.remove('active');
+        if (b.dataset.mode === randomBlendMode) {
+          b.classList.add('active');
+        }
+      });
       
-      // Always update the gradient after randomizing curves
-      renderGradient();
-      
-      // Always update the gradient after randomizing curves
+      // STEP 6: Final update of the gradient
+      renderGradientBar();
       renderGradient();
     });
 
@@ -2249,8 +2297,13 @@
       });
       
       // Remove excess elements if stops were removed
-      while (stopElements.length > stops.length) {
-        gradientStops.removeChild(stopElements[stopElements.length - 1]);
+      // Convert NodeList to array to avoid stale references
+      const currentStopElements = Array.from(gradientStops.querySelectorAll('.gradient-stop'));
+      while (currentStopElements.length > stops.length) {
+        const elementToRemove = currentStopElements.pop();
+        if (elementToRemove && elementToRemove.parentNode) {
+          elementToRemove.parentNode.removeChild(elementToRemove);
+        }
       }
     }
 
@@ -2368,28 +2421,31 @@
     function randomizeGradientStops() {
       const count = parseInt(multiColorCount.value) || 3;
       
+      // Sort by position first
+      gradientStopsArray.sort((a, b) => a.position - b.position);
+      
       // Adjust stop count to match requested count
       if (gradientStopsArray.length < count) {
         // Add stops evenly distributed
         while (gradientStopsArray.length < count) {
-          const position = gradientStopsArray.length / (count - 1);
+          const newIndex = gradientStopsArray.length;
+          const position = newIndex / (count - 1);
           const col = getColorFromGradient(position);
           gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
         }
       } else if (gradientStopsArray.length > count) {
-        // Remove excess stops from middle, keeping first and last
+        // Remove last stops until we reach the desired count
         while (gradientStopsArray.length > count) {
-          const toRemove = Math.floor(gradientStopsArray.length / 2);
-          if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
-            gradientStopsArray.splice(toRemove, 1);
+          // Remove the last stop (keep first stop at position 0)
+          if (gradientStopsArray.length > 1) {
+            gradientStopsArray.pop();
           } else {
             break; // Safety break
           }
         }
       }
       
-      // Sort by position and randomize colors and redistribute positions
-      gradientStopsArray.sort((a, b) => a.position - b.position);
+      // Redistribute positions evenly and randomize colors
       gradientStopsArray.forEach((stop, i) => {
         stop.position = i / (count - 1);
         stop.color = {
@@ -2407,6 +2463,7 @@
         selectedStopIndex = gradientStopsArray.length - 1;
       }
       
+      // Always update both the bar and the gradient
       renderGradientBar();
       renderGradient();
     }
@@ -2727,19 +2784,11 @@
       shuffleColors();
     });
 
-    // Randomize colors checkbox and count input handlers
-    multiColorRandom.addEventListener('change', () => {
-      updateColorCountControls();
-      if (multiColorRandom.checked) {
-        // Generate random seed for colors
-        const seed = Math.floor(Math.random() * 1000000);
-        seededRNG.setSeed(seed);
-        randomizeGradientStops();
-      } else {
-        // When unchecked, keep current stops but clear activePalette
-        activePalette = null;
-        renderGradient();
-      }
+    // Randomize colors button handler
+    randomizeColorsBtn.addEventListener('click', () => {
+      const seed = Math.floor(Math.random() * 1000000);
+      seededRNG.setSeed(seed);
+      randomizeGradientStops();
     });
 
     // Sync slider and number input for color count
@@ -2747,52 +2796,43 @@
       multiColorCount.value = multiColorCountSlider.value;
       const count = parseInt(multiColorCountSlider.value) || 8;
       
-      if (multiColorRandom.checked) {
-        // Generate random seed for colors
-        const seed = Math.floor(Math.random() * 1000000);
-        seededRNG.setSeed(seed);
-        randomizeGradientStops();
-      } else {
-        // When randomize is not checked, adjust stop count without randomizing colors
-        const currentCount = gradientStopsArray.length;
-        if (count !== currentCount) {
-          if (count < currentCount) {
-            // Remove excess stops from middle, keeping first and last
-            while (gradientStopsArray.length > count) {
-              const toRemove = Math.floor(gradientStopsArray.length / 2);
-              if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
-                gradientStopsArray.splice(toRemove, 1);
-              } else {
-                break; // Safety break
-              }
-            }
-          } else if (count > currentCount) {
-            // Add stops evenly distributed with interpolated colors
-            while (gradientStopsArray.length < count) {
-              const newIndex = gradientStopsArray.length;
-              const position = newIndex / (count - 1);
-              const col = getColorFromGradient(position);
-              gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
-            }
+      // Adjust stop count without randomizing colors
+      const currentCount = gradientStopsArray.length;
+      if (count !== currentCount) {
+        // Sort by position first to ensure we keep the right stops
+        gradientStopsArray.sort((a, b) => a.position - b.position);
+        
+        if (count < currentCount) {
+          // Keep first 'count' stops, remove the rest
+          gradientStopsArray.splice(count);
+        } else if (count > currentCount) {
+          // Add stops evenly distributed with interpolated colors
+          while (gradientStopsArray.length < count) {
+            const newIndex = gradientStopsArray.length;
+            const position = newIndex / (count - 1);
+            const col = getColorFromGradient(position);
+            gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
           }
-          
-          // Update selected stop index if needed
-          if (selectedStopIndex >= gradientStopsArray.length) {
-            selectedStopIndex = gradientStopsArray.length - 1;
-          }
-          
-          // Redistribute positions evenly
-          gradientStopsArray.sort((a, b) => a.position - b.position);
-          const finalCount = gradientStopsArray.length;
-          if (finalCount > 1) {
-            gradientStopsArray.forEach((stop, i) => {
-              stop.position = i / (finalCount - 1);
-            });
-          }
-          
-          renderGradientBar();
-          renderGradient();
         }
+        
+        // Update selected stop index if needed
+        if (selectedStopIndex >= gradientStopsArray.length) {
+          selectedStopIndex = Math.max(0, gradientStopsArray.length - 1);
+        }
+        
+        // Redistribute positions evenly
+        const finalCount = gradientStopsArray.length;
+        if (finalCount > 1) {
+          gradientStopsArray.forEach((stop, i) => {
+            stop.position = i / (finalCount - 1);
+          });
+        } else if (finalCount === 1) {
+          gradientStopsArray[0].position = 0;
+        }
+        
+        // Force complete re-render
+        renderGradientBar();
+        renderGradient();
       }
     });
 
@@ -2805,52 +2845,43 @@
       }
       
       const count = val;
-      if (multiColorRandom.checked) {
-        // Generate random seed for colors
-        const seed = Math.floor(Math.random() * 1000000);
-        seededRNG.setSeed(seed);
-        randomizeGradientStops();
-      } else {
-        // When randomize is not checked, adjust stop count without randomizing colors
-        const currentCount = gradientStopsArray.length;
-        if (count !== currentCount) {
-          if (count < currentCount) {
-            // Remove excess stops from middle, keeping first and last
-            while (gradientStopsArray.length > count) {
-              const toRemove = Math.floor(gradientStopsArray.length / 2);
-              if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
-                gradientStopsArray.splice(toRemove, 1);
-              } else {
-                break; // Safety break
-              }
-            }
-          } else if (count > currentCount) {
-            // Add stops evenly distributed with interpolated colors
-            while (gradientStopsArray.length < count) {
-              const newIndex = gradientStopsArray.length;
-              const position = newIndex / (count - 1);
-              const col = getColorFromGradient(position);
-              gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
-            }
+      // Adjust stop count without randomizing colors
+      const currentCount = gradientStopsArray.length;
+      if (count !== currentCount) {
+        // Sort by position first to ensure we keep the right stops
+        gradientStopsArray.sort((a, b) => a.position - b.position);
+        
+        if (count < currentCount) {
+          // Keep first 'count' stops, remove the rest
+          gradientStopsArray.splice(count);
+        } else if (count > currentCount) {
+          // Add stops evenly distributed with interpolated colors
+          while (gradientStopsArray.length < count) {
+            const newIndex = gradientStopsArray.length;
+            const position = newIndex / (count - 1);
+            const col = getColorFromGradient(position);
+            gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
           }
-          
-          // Update selected stop index if needed
-          if (selectedStopIndex >= gradientStopsArray.length) {
-            selectedStopIndex = gradientStopsArray.length - 1;
-          }
-          
-          // Redistribute positions evenly
-          gradientStopsArray.sort((a, b) => a.position - b.position);
-          const finalCount = gradientStopsArray.length;
-          if (finalCount > 1) {
-            gradientStopsArray.forEach((stop, i) => {
-              stop.position = i / (finalCount - 1);
-            });
-          }
-          
-          renderGradientBar();
-          renderGradient();
         }
+        
+        // Update selected stop index if needed
+        if (selectedStopIndex >= gradientStopsArray.length) {
+          selectedStopIndex = Math.max(0, gradientStopsArray.length - 1);
+        }
+        
+        // Redistribute positions evenly
+        const finalCount = gradientStopsArray.length;
+        if (finalCount > 1) {
+          gradientStopsArray.forEach((stop, i) => {
+            stop.position = i / (finalCount - 1);
+          });
+        } else if (finalCount === 1) {
+          gradientStopsArray[0].position = 0;
+        }
+        
+        // Force complete re-render
+        renderGradientBar();
+        renderGradient();
       }
     });
 
