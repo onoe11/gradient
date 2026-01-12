@@ -137,6 +137,39 @@
       color: #1a1a1a;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       font-weight: 700;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #randomBtn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 89, 94, 0.8),
+        rgba(255, 202, 58, 0.8),
+        rgba(138, 201, 38, 0.8),
+        rgba(25, 130, 196, 0.8),
+        rgba(106, 76, 147, 0.8),
+        transparent
+      );
+      transition: left 0s;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #randomBtn.animating::before {
+      left: 100%;
+      transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    #randomBtn:not(.animating)::before {
+      left: -100%;
+      transition: left 0s;
     }
 
     #randomBtn:hover {
@@ -144,8 +177,19 @@
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     }
 
+    #randomBtn:active {
+      transform: none;
+    }
+
     #randomBtn .material-icons {
       color: #1a1a1a;
+      position: relative;
+      z-index: 1;
+    }
+
+    #randomBtn span:not(.material-icons) {
+      position: relative;
+      z-index: 1;
     }
 
     .btn:active {
@@ -803,6 +847,14 @@
       gap: 8px;
       align-items: center;
     }
+    
+    .curve-separator {
+      width: 1px;
+      height: 24px;
+      background: var(--stroke);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
 
     .floating-export {
       position: fixed;
@@ -998,8 +1050,9 @@
     </div>
     <button class="btn secondary" id="invertCurveBtn"
       style="padding:8px 12px; font-size:13px;"><span class="material-icons">swap_horiz</span> Invert</button>
-    <button class="toggle-btn on" id="toggleCurvesBtn" style="padding:8px 12px; font-size:13px; width:160px; flex-shrink:0;"><span class="material-icons">visibility</span> Curves visible</button>
     <button class="toggle-btn" id="randomizeCurvesBtn" style="padding:8px 12px; font-size:13px;"><span class="material-icons">casino</span> Randomize Curves</button>
+    <div class="curve-separator"></div>
+    <button class="toggle-btn on" id="toggleCurvesBtn" style="padding:8px 12px; font-size:13px; width:160px; flex-shrink:0;"><span class="material-icons">visibility</span> Curves visible</button>
   </div>
 
   <div class="floating-export">
@@ -2090,7 +2143,19 @@
     // Randomize
     // Randomize
     // Randomize
-    document.getElementById('randomBtn').addEventListener('click', () => {
+    const randomBtn = document.getElementById('randomBtn');
+    randomBtn.addEventListener('click', () => {
+      // Reset animation if already playing
+      randomBtn.classList.remove('animating');
+      // Force reflow to restart animation
+      void randomBtn.offsetWidth;
+      // Start animation
+      randomBtn.classList.add('animating');
+      // Remove class after animation completes
+      setTimeout(() => {
+        randomBtn.classList.remove('animating');
+      }, 600);
+      
       // STEP 1: Set amount of colors FIRST (3-11)
       const colorCount = Math.floor(Math.random() * 9) + 3; // 3 to 11
       multiColorCount.value = colorCount;
