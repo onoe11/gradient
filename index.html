@@ -1594,13 +1594,18 @@
       
       // Use gradient stops
       const stops = gradientStopsArray.sort((a, b) => a.position - b.position);
+      if (stops.length === 0) return { r: 128, g: 128, b: 128 };
+      
+      // Handle edge cases
       if (t <= stops[0].position) return stops[0].color;
       if (t >= stops[stops.length - 1].position) return stops[stops.length - 1].color;
       
+      // Interpolate between stops
       for (let i = 0; i < stops.length - 1; i++) {
         const s1 = stops[i];
         const s2 = stops[i + 1];
-        if (t >= s1.position && t <= s2.position) {
+        // Use >= and < to ensure we catch values at the boundary
+        if (t >= s1.position && t < s2.position) {
           const localT = (t - s1.position) / (s2.position - s1.position);
           return {
             r: lerp(s1.color.r, s2.color.r, localT),
@@ -1609,7 +1614,10 @@
           };
         }
       }
-      return stops[0].color;
+      
+      // Fallback: if we somehow didn't match, return the last stop's color
+      // This ensures the purple color is always accessible
+      return stops[stops.length - 1].color;
     }
 
     function renderGradient() {
@@ -2011,73 +2019,80 @@
 
     // Gradient stop management
     function renderGradientBar() {
-      // Sort stops by position (create new array to avoid mutating original)
-      const stops = [...gradientStopsArray].sort((a, b) => a.position - b.position);
+      // Sort stops by position with stable sort (preserve original order when positions are equal)
+      const stopsWithIndex = gradientStopsArray.map((stop, idx) => ({ stop, originalIndex: idx }));
+      stopsWithIndex.sort((a, b) => {
+        const posDiff = a.stop.position - b.stop.position;
+        // If positions are very close (within 0.001), maintain original order
+        if (Math.abs(posDiff) < 0.001) {
+          return a.originalIndex - b.originalIndex;
+        }
+        return posDiff;
+      });
+      const stops = stopsWithIndex.map(item => item.stop);
+      
       const gradientStr = stops.map(s => {
         const hex = rgbToHex(s.color.r, s.color.g, s.color.b);
         return `${hex} ${s.position * 100}%`;
       }).join(', ');
       gradientBar.style.background = `linear-gradient(to right, ${gradientStr})`;
       
-      // Update stop elements efficiently
-      const stopElements = gradientStops.querySelectorAll('.gradient-stop');
+      // Get or create stop elements - use a map to track by ID
+      const stopElementsMap = new Map();
+      const existingElements = gradientStops.querySelectorAll('.gradient-stop');
+      existingElements.forEach(el => {
+        const stopId = parseInt(el.dataset.stopId || el.dataset.index);
+        // Try to find the stop by ID
+        const stop = gradientStopsArray.find(s => s.id === stopId);
+        if (stop) {
+          stopElementsMap.set(stop.id, el);
+        }
+      });
+      
+      // Update or create stop elements
       stops.forEach((stop, sortedIndex) => {
         // Find original index in unsorted array using unique ID
-        let index = gradientStopsArray.findIndex(s => s.id === stop.id);
+        const index = gradientStopsArray.findIndex(s => s.id === stop.id);
+        if (index === -1) return; // Skip if stop not found
         
-        // Fallback: if ID matching fails, try to match by position and color
-        if (index === -1) {
-          index = gradientStopsArray.findIndex(s => 
-            s.position === stop.position && 
-            s.color.r === stop.color.r && 
-            s.color.g === stop.color.g && 
-            s.color.b === stop.color.b
-          );
-        }
-        
-        // If still not found, use sortedIndex as fallback (shouldn't happen)
-        if (index === -1) {
-          index = sortedIndex;
+        // Get or create element
+        let stopEl = stopElementsMap.get(stop.id);
+        if (!stopEl) {
+          stopEl = document.createElement('div');
+          stopEl.className = 'gradient-stop';
+          stopEl.dataset.stopId = stop.id;
+          gradientStops.appendChild(stopEl);
+          stopElementsMap.set(stop.id, stopEl);
         }
         
         // Calculate transform to prevent overflow at edges
-        // Stop is 24px wide, so 12px on each side
-        // At position 0, we want left edge at 0%, so translateX should be 0 instead of -50%
-        // At position 1, we want right edge at 100%, so translateX should be -100% instead of -50%
         const isLeftmost = sortedIndex === 0;
         const isRightmost = sortedIndex === stops.length - 1;
         let transformX = '-50%';
         if (isLeftmost && stop.position <= 0.01) {
-          transformX = '0%'; // Leftmost stop - align left edge
+          transformX = '0%';
         } else if (isRightmost && stop.position >= 0.99) {
-          transformX = '-100%'; // Rightmost stop - align right edge
+          transformX = '-100%';
         }
         
-        if (stopElements[sortedIndex]) {
-          // Update existing element
-          stopElements[sortedIndex].style.left = (stop.position * 100) + '%';
-          stopElements[sortedIndex].style.transform = `translate(${transformX}, -50%)`;
-          stopElements[sortedIndex].style.setProperty('--stop-transform-x', transformX);
-          stopElements[sortedIndex].className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
-          stopElements[sortedIndex].dataset.index = index;
-          stopElements[sortedIndex].style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
-        } else {
-          // Create new element if needed
-          const stopEl = document.createElement('div');
-          stopEl.className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
-          stopEl.style.left = (stop.position * 100) + '%';
-          stopEl.style.transform = `translate(${transformX}, -50%)`;
-          stopEl.style.setProperty('--stop-transform-x', transformX);
-          stopEl.style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
-          stopEl.dataset.index = index;
-          gradientStops.appendChild(stopEl);
-        }
+        // Update element properties
+        stopEl.style.left = (stop.position * 100) + '%';
+        stopEl.style.transform = `translate(${transformX}, -50%)`;
+        stopEl.style.setProperty('--stop-transform-x', transformX);
+        stopEl.className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
+        stopEl.dataset.index = index;
+        stopEl.dataset.stopId = stop.id;
+        stopEl.style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
       });
       
-      // Remove excess elements if stops were removed
-      while (stopElements.length > stops.length) {
-        gradientStops.removeChild(stopElements[stopElements.length - 1]);
-      }
+      // Remove excess elements that don't correspond to any stop
+      const validIds = new Set(gradientStopsArray.map(s => s.id));
+      existingElements.forEach(el => {
+        const stopId = parseInt(el.dataset.stopId || el.dataset.index);
+        if (!validIds.has(stopId)) {
+          el.remove();
+        }
+      });
     }
 
     function selectStop(index) {
@@ -2307,7 +2322,19 @@
 
 
     // Gradient stop interactions
+    let isPointerDown = false;
+    let hasMoved = false;
+    let draggingStop = null;
+    let renderGradientTimeout = null;
+    let originalStopPositions = null;
+    let pointerDownX = null;
+    
+    // Prevent adding stops during pointer interactions
     document.querySelector('.gradient-bar-container').addEventListener('click', (e) => {
+      // Don't add stop if pointer was down (could be from drag)
+      if (isPointerDown || hasMoved) {
+        return;
+      }
       // Only add stop if clicking on the gradient bar itself, not on a stop
       if (!e.target.classList.contains('gradient-stop')) {
         const rect = gradientBar.getBoundingClientRect();
@@ -2317,35 +2344,64 @@
     });
 
     gradientStops.addEventListener('click', (e) => {
+      // Don't select if we just finished dragging
+      if (hasMoved) {
+        return;
+      }
       if (e.target.classList.contains('gradient-stop')) {
-        const index = parseInt(e.target.dataset.index);
-        selectStop(index);
+        // Try to get index from dataset, fallback to finding by stopId
+        let index = parseInt(e.target.dataset.index);
+        if (isNaN(index) && e.target.dataset.stopId) {
+          const stopId = parseInt(e.target.dataset.stopId);
+          index = gradientStopsArray.findIndex(s => s.id === stopId);
+        }
+        if (!isNaN(index) && index >= 0) {
+          selectStop(index);
+        }
       }
     });
 
     // Drag stops
-    let draggingStop = null;
-    let renderGradientTimeout = null;
-    
     gradientStops.addEventListener('pointerdown', (e) => {
       if (e.target.classList.contains('gradient-stop')) {
-        const index = parseInt(e.target.dataset.index);
+        // Try to get index from dataset, fallback to finding by stopId
+        let index = parseInt(e.target.dataset.index);
+        if (isNaN(index) && e.target.dataset.stopId) {
+          const stopId = parseInt(e.target.dataset.stopId);
+          index = gradientStopsArray.findIndex(s => s.id === stopId);
+        }
+        if (isNaN(index) || index < 0) return;
+        
+        isPointerDown = true;
+        hasMoved = false;
+        pointerDownX = e.clientX;
+        
+        // Select the stop and update color picker
+        selectStop(index);
+        
         draggingStop = {
           index: index,
-          element: e.target
+          element: e.target,
+          stopId: gradientStopsArray[index].id
         };
         e.preventDefault();
         e.stopPropagation();
         
+        // Store original positions of all stops to prevent them from moving
+        originalStopPositions = gradientStopsArray.map((stop, idx) => ({
+          index: idx,
+          position: stop.position,
+          id: stop.id
+        }));
+        
         // Disable pointer events on all other stops while dragging
-        // This allows the dragged stop to pass over other stops
         const allStops = gradientStops.querySelectorAll('.gradient-stop');
         allStops.forEach((stop) => {
-          const stopIndex = parseInt(stop.dataset.index);
+          const stopId = parseInt(stop.dataset.stopId || stop.dataset.index);
+          const stopIndex = gradientStopsArray.findIndex(s => s.id === stopId);
           if (stopIndex !== index) {
             stop.style.pointerEvents = 'none';
           } else {
-            // Bring dragged stop to front with higher z-index
             stop.style.zIndex = '1000';
           }
         });
@@ -2353,34 +2409,83 @@
     });
 
     window.addEventListener('pointermove', (e) => {
-      if (draggingStop) {
-        // Only handle stop dragging if we're actually dragging a stop
-        const rect = gradientBar.getBoundingClientRect();
-        const position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        gradientStopsArray[draggingStop.index].position = position;
-        
-        // Update gradient bar immediately for smooth visual feedback
-        renderGradientBar();
-        
-        // Throttle gradient rendering during drag for performance
-        if (renderGradientTimeout) {
-          clearTimeout(renderGradientTimeout);
+      if (isPointerDown && draggingStop) {
+        // Check if mouse actually moved (more than 3px)
+        if (!hasMoved && pointerDownX !== null) {
+          if (Math.abs(e.clientX - pointerDownX) > 3) {
+            hasMoved = true;
+          }
         }
-        renderGradientTimeout = setTimeout(() => {
-          renderGradient();
-        }, 16); // ~60fps throttling
+        
+        if (hasMoved && originalStopPositions && draggingStop.stopId) {
+          const rect = gradientBar.getBoundingClientRect();
+          let position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+          
+          // Find the dragged stop by ID (not index, to ensure we get the right one)
+          const draggedStop = gradientStopsArray.find(s => s.id === draggingStop.stopId);
+          if (!draggedStop) return;
+          
+          // Constrain position to avoid overlapping with other stops (minimum distance)
+          const minDistance = 0.01; // 1% minimum distance
+          
+          // Check against original positions of other stops (by ID)
+          originalStopPositions.forEach(original => {
+            if (original.id === draggingStop.stopId) return; // Skip the dragged stop
+            
+            const otherPosition = original.position;
+            
+            // If we're too close to another stop, push away
+            if (Math.abs(position - otherPosition) < minDistance) {
+              if (position > otherPosition) {
+                position = otherPosition + minDistance;
+              } else {
+                position = otherPosition - minDistance;
+              }
+              // Clamp to valid range
+              position = Math.max(0, Math.min(1, position));
+            }
+          });
+          
+          // Restore all other stops to their original positions (by ID, not index)
+          originalStopPositions.forEach(original => {
+            if (original.id !== draggingStop.stopId) {
+              const stop = gradientStopsArray.find(s => s.id === original.id);
+              if (stop) {
+                // Only update position, never touch color
+                stop.position = original.position;
+              }
+            }
+          });
+          
+          // Update ONLY the dragged stop's position (never touch color)
+          draggedStop.position = position;
+          
+          // Update gradient bar immediately (this will also update the selected stop visual)
+          renderGradientBar();
+          
+          // Throttle gradient rendering
+          if (renderGradientTimeout) {
+            clearTimeout(renderGradientTimeout);
+          }
+          renderGradientTimeout = setTimeout(() => {
+            renderGradient();
+          }, 16);
+        }
       }
     });
 
     window.addEventListener('pointerup', (e) => {
-      if (draggingStop) {
+      if (isPointerDown) {
         // Clear any pending render
         if (renderGradientTimeout) {
           clearTimeout(renderGradientTimeout);
           renderGradientTimeout = null;
         }
-        // Final render on release
-        renderGradient();
+        
+        if (hasMoved && draggingStop) {
+          // Final render on release after drag
+          renderGradient();
+        }
         
         // Re-enable pointer events on all stops
         const allStops = gradientStops.querySelectorAll('.gradient-stop');
@@ -2389,7 +2494,14 @@
           stop.style.zIndex = '';
         });
         
-        draggingStop = null;
+        // Reset flags after a short delay to prevent click events
+        setTimeout(() => {
+          isPointerDown = false;
+          hasMoved = false;
+          draggingStop = null;
+          originalStopPositions = null;
+          pointerDownX = null;
+        }, 50);
       }
     });
 
