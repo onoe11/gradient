@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G-radient Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --panel: #1a1d24;
+      --stroke: #2a2d35;
+      --primary: #4285f4;
+      --primary-hover: #5a95f5;
+      --bg: #0f1116;
+      --text: #ffffff;
+      --text-secondary: #b8bcc8;
+      --input-bg: #252831;
+      --input-border: #353842;
+      --input-border-hover: #404450;
+      --shadow-primary: rgba(66, 133, 244, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #0f1116;
+      min-height: 100vh;
+      overflow: auto;
+      font-family: inherit;
+      display: flex;
+      color: var(--text);
+    }
+
+    .sidebar {
+      width: 360px;
+      min-width: 360px;
+      background: var(--panel);
+      border-right: 1px solid var(--stroke);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--input-border);
+      border-radius: 4px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: var(--input-border-hover);
+    }
+
+    .output-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f1116;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-root {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 600px;
+    }
+
+    .shell {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 12px var(--shadow-primary);
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px var(--shadow-primary);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.secondary {
+      background: var(--input-bg);
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid var(--input-border);
+    }
+
+    .btn.secondary:hover {
+      background: #2d3139;
+      border-color: var(--input-border-hover);
+    }
+
+    .panel {
+      background: var(--bg);
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel h3 {
+      margin: 0 0 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: 12px;
+      color: var(--text-secondary);
+      gap: 4px;
+      font-weight: 500;
+    }
+
+    input,
+    select {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--input-border);
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 400;
+      background: var(--input-bg);
+      color: var(--text);
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    input:hover,
+    select:hover {
+      border-color: var(--input-border-hover);
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #2a2d35;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      background: var(--input-bg);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--bg);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid var(--bg);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .slider-with-input {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .slider-with-input input[type="range"] {
+      flex: 1;
+    }
+
+    .blend-mode-buttons {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+
+    .blend-btn {
+      aspect-ratio: 1;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: all 0.15s ease;
+      color: var(--text);
+    }
+
+    .blend-btn:hover {
+      background: #2d3139;
+      border-color: var(--input-border-hover);
+    }
+
+    .blend-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .blend-btn .material-icons {
+      font-size: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    #gradientCanvas,
+    #xCurveCanvas,
+    #yCurveCanvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #gradientCanvas {
+      pointer-events: none;
+    }
+
+    #xCurveCanvas,
+    #yCurveCanvas {
+      z-index: 1;
+    }
+
+    #xCurveCanvas,
+    #yCurveCanvas {
+      pointer-events: none;
+      /* re-enabled for active curve */
+    }
+
+    #xCurveCanvas.curves-enabled,
+    #yCurveCanvas.curves-enabled {
+      pointer-events: all;
+    }
+    
+    /* Ensure active curve is on top and receives events */
+    #xCurveCanvas[style*="z-index: 10"],
+    #yCurveCanvas[style*="z-index: 10"] {
+      pointer-events: all !important;
+    }
+
+    #yCurveCanvas {
+      mix-blend-mode: multiply;
+    }
+
+    #xCurveCanvas {
+      mix-blend-mode: screen;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 0 4px;
+    }
+
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+    }
+
+    .swatch {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      transition: transform 0.08s ease;
+    }
+
+    .swatch:hover {
+      transform: scale(1.06);
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .toggle-btn {
+      border-radius: 999px;
+      border: 1px solid var(--input-border);
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 500;
+      background: var(--input-bg);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .toggle-btn:hover {
+      background: #2d3139;
+      border-color: var(--input-border-hover);
+    }
+
+    .toggle-btn.on {
+      background: var(--primary);
+      color: white;
+      border-color: transparent;
+    }
+
+    .toggle-btn.on:hover {
+      background: var(--primary-hover);
+    }
+
+    .curve-toggle-group {
+      display: inline-flex;
+      border-radius: 999px;
+      border: 1px solid var(--input-border);
+      overflow: hidden;
+      background: var(--input-bg);
+    }
+
+    .curve-toggle {
+      border: none;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 500;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text);
+      transition: all 0.15s ease;
+    }
+
+    .curve-toggle:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .curve-toggle.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .curve-toggle.active:hover {
+      background: var(--primary-hover);
+    }
+
+    .gradient-picker-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .gradient-bar-container {
+      position: relative;
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--input-border);
+      cursor: pointer;
+      background: linear-gradient(to right, #3b6bff, #8b5cf6);
+    }
+
+    .gradient-bar {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .gradient-stops {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .gradient-stop {
+      position: absolute;
+      width: 24px;
+      height: 32px;
+      border: 2px solid white;
+      border-radius: 4px;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      pointer-events: all;
+      transform: translate(-50%, -50%);
+      top: 50%;
+      transition: transform 0.1s ease;
+    }
+
+    .gradient-stop:hover {
+      transform: translate(var(--stop-transform-x, -50%), -50%) scale(1.1);
+    }
+
+    .gradient-stop.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary), 0 0 0 4px var(--shadow-primary);
+    }
+
+    .gradient-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn .material-icons,
+    .toggle-btn .material-icons {
+      font-size: 16px;
+      vertical-align: middle;
+      margin-right: 4px;
+      line-height: 1;
+    }
+
+    .btn.secondary .material-icons {
+      font-size: 14px;
+    }
+
+    .btn .material-icons:only-child,
+    .toggle-btn .material-icons:only-child {
+      margin-right: 0;
+    }
+
+    .stop-color-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .color-picker-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .color-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    #colorHexInput {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'Monaco', 'Menlo', monospace;
+    }
+
+    .spectrum-container {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--input-border);
+      cursor: crosshair;
+    }
+
+    #spectrumCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .spectrum-marker {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border: 2px solid white;
+      border-radius: 50%;
+      pointer-events: none;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+      transform: translate(-50%, -50%);
+    }
+
+    .hue-slider-container {
+      position: relative;
+      width: 100%;
+      height: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--input-border);
+      cursor: pointer;
+    }
+
+    #hueCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hue-marker {
+      position: absolute;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+      transform: translateX(-50%);
+    }
+
+    .floating-export {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(31, 41, 55, 0.8);
+      padding: 8px;
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--stroke);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar">
+    <div class="shell">
+      <header>
+        <h1>G-radient Builder</h1>
+        <div class="row">
+          <button class="btn" id="randomBtn"><span class="material-icons">shuffle</span> Randomize</button>
+        </div>
+      </header>
+
+      <div class="panel">
+        <h3>Canvas & Blending</h3>
+        <div class="controls">
+          <label>Canvas width
+            <input type="number" id="widthInput" value="900" min="200" max="2000" />
+          </label>
+          <label>Canvas height
+            <input type="number" id="heightInput" value="520" min="200" max="2000" />
+          </label>
+          <label>Global blend
+            <div class="blend-mode-buttons" id="blendModeButtons">
+              <button class="blend-btn active" data-mode="avg" title="Average"><span class="material-icons">blur_on</span></button>
+              <button class="blend-btn" data-mode="mul" title="Multiply"><span class="material-icons">close</span></button>
+              <button class="blend-btn" data-mode="screen" title="Screen"><span class="material-icons">add</span></button>
+              <button class="blend-btn" data-mode="overlay" title="Overlay"><span class="material-icons">layers</span></button>
+              <button class="blend-btn" data-mode="softlight" title="Soft Light"><span class="material-icons">wb_sunny</span></button>
+              <button class="blend-btn" data-mode="hardlight" title="Hard Light"><span class="material-icons">brightness_high</span></button>
+              <button class="blend-btn" data-mode="difference" title="Difference"><span class="material-icons">compare</span></button>
+              <button class="blend-btn" data-mode="exclusion" title="Exclusion"><span class="material-icons">remove_circle</span></button>
+              <button class="blend-btn" data-mode="darken" title="Darken"><span class="material-icons">dark_mode</span></button>
+              <button class="blend-btn" data-mode="lighten" title="Lighten"><span class="material-icons">light_mode</span></button>
+              <button class="blend-btn" data-mode="colorburn" title="Color Burn"><span class="material-icons">whatshot</span></button>
+              <button class="blend-btn" data-mode="colordodge" title="Color Dodge"><span class="material-icons">flare</span></button>
+            </div>
+            <select id="blendMode" style="display:none;">
+              <option value="avg">Average</option>
+              <option value="mul">Multiply</option>
+              <option value="screen">Screen</option>
+              <option value="overlay">Overlay</option>
+              <option value="softlight">Soft Light</option>
+              <option value="hardlight">Hard Light</option>
+              <option value="difference">Difference</option>
+              <option value="exclusion">Exclusion</option>
+              <option value="darken">Darken</option>
+              <option value="lighten">Lighten</option>
+              <option value="colorburn">Color Burn</option>
+              <option value="colordodge">Color Dodge</option>
+            </select>
+          </label>
+          <label>Feather
+            <div class="slider-with-input">
+              <input type="range" id="featherInput" value="18" min="0" max="40" />
+              <input type="number" id="featherValue" value="18" min="0" max="40" style="width:60px; padding:4px 6px; font-size:12px;" />
+            </div>
+          </label>
+          <label>Noise
+            <div class="slider-with-input">
+              <input type="range" id="noiseInput" value="6" min="0" max="30" />
+              <input type="number" id="noiseValue" value="6" min="0" max="30" style="width:60px; padding:4px 6px; font-size:12px;" />
+            </div>
+          </label>
+        </div>
+
+
+        <div class="gradient-picker-section">
+          <label style="margin-bottom:8px; display:block;">Gradient Colors</label>
+          <div class="gradient-bar-container">
+            <div class="gradient-bar" id="gradientBar"></div>
+            <div class="gradient-stops" id="gradientStops"></div>
+          </div>
+          <div class="gradient-controls">
+            <button class="btn secondary" id="removeStopBtn" style="padding:6px 12px; font-size:12px;"><span class="material-icons">delete</span> Remove Selected</button>
+            <button class="btn secondary" id="invertGradientBtn" style="padding:6px 12px; font-size:12px;"><span class="material-icons">swap_horiz</span> Invert Gradient</button>
+          </div>
+          <div class="row" style="margin-top:8px; gap:12px; align-items:center;">
+            <label style="font-size:11px; gap:4px;" class="row">
+              <input type="checkbox" id="multiColorRandom" />
+              <span>Randomize colors</span>
+            </label>
+            <label style="font-size:11px; gap:4px;" class="row">
+              <span>Colors</span>
+              <input type="number" id="multiColorCount" value="3" min="2" max="8"
+                style="width:54px; padding:4px 6px; font-size:11px;" />
+            </label>
+          </div>
+          <div class="stop-color-picker" id="stopColorPicker" style="display:none;">
+          <div class="spectrum-container">
+            <canvas id="spectrumCanvas" width="200" height="200"></canvas>
+            <div class="spectrum-marker" id="spectrumMarker"></div>
+          </div>
+          <div class="hue-slider-container">
+            <canvas id="hueCanvas" width="200" height="20"></canvas>
+            <div class="hue-marker" id="hueMarker"></div>
+          </div>
+            <div class="color-picker-container">
+              <div class="color-preview" id="colorPreview" style="background:#3b6bff;"></div>
+              <input type="text" id="colorHexInput" value="#3b6bff" placeholder="#3b6bff" maxlength="7" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="grid">
+        <div class="panel">
+          <h3>Dither</h3>
+          <div class="row" style="margin-bottom: 8px;">
+            <label style="font-size:11px; gap:4px;" class="row">
+              <input type="checkbox" id="ditherEnabled" />
+              <span>Enable dithering</span>
+            </label>
+          </div>
+          <label>
+            Algorithm
+            <select id="ditherAlgorithm" style="width:100%;">
+              <option value="floyd-steinberg">Floyd-Steinberg</option>
+              <option value="ordered">Ordered (Bayer)</option>
+              <option value="atkinson">Atkinson</option>
+              <option value="stucki">Stucki</option>
+              <option value="burkes">Burkes</option>
+            </select>
+          </label>
+          <label>
+            Levels
+            <input type="number" id="ditherLevels" value="256" min="2" max="256" step="1" />
+            <span class="note" style="font-size:11px; margin-top:4px;">Number of color levels (2-256)</span>
+          </label>
+        </div>
+
+        <div class="panel">
+          <div class="row" style="justify-content: space-between; margin-bottom: 6px;">
+            <h3 style="margin-bottom:0;">Curves & Random</h3>
+            <div class="row">
+              <div class="curve-toggle-group">
+                <button class="curve-toggle active" id="editXBtn">X</button>
+                <button class="curve-toggle" id="editYBtn">Y</button>
+              </div>
+              <button class="btn secondary" id="invertCurveBtn"
+                style="margin-left:8px; padding:4px 8px; font-size:11px;"><span class="material-icons">swap_horiz</span> Invert</button>
+              <button class="toggle-btn on" id="toggleCurvesBtn"><span class="material-icons">visibility</span> Curves visible</button>
+            </div>
+          </div>
+          <p class="note" style="margin:0 0 8px;">
+            Curves are drawn directly over the gradient. Hide them to inspect the result. Left-click to add points,
+            right-click to remove.
+          </p>
+          <div class="row" style="margin-top:8px;">
+            <label style="font-size:11px; gap:4px;" class="row">
+              Seed
+              <input type="number" id="seedInput" value="0" min="0"
+                style="width:80px; padding:4px 6px; font-size:11px;" />
+            </label>
+            <label style="font-size:11px; gap:4px;" class="row">
+              <input type="checkbox" id="autoRandomSeed" />
+              <span>Auto random seed</span>
+            </label>
+            <button class="btn secondary" id="randomSeedBtn" style="padding:4px 10px; font-size:11px;">Random
+              Seed</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="output-area">
+    <div class="canvas-root">
+      <canvas id="gradientCanvas" width="900" height="520"></canvas>
+      <canvas id="xCurveCanvas" width="900" height="520"></canvas>
+      <canvas id="yCurveCanvas" width="900" height="520"></canvas>
+    </div>
+  </div>
+
+  <div class="floating-export">
+    <select id="exportScale"
+      style="padding:10px 14px; border-radius:10px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text); font-size:14px; font-weight:600; cursor:pointer;">
+      <option value="1">1x</option>
+      <option value="2">2x</option>
+      <option value="3">3x</option>
+      <option value="4">4x</option>
+    </select>
+    <button class="btn" id="exportBtn"
+      style="background:#34a853; box-shadow:0 4px 12px rgba(52, 168, 83, 0.25);"><span class="material-icons">download</span> Export PNG</button>
+  </div>
+
+  <script>
+    // Utility: Catmull-Rom spline for smooth curves through points.
+    function catmullRom(p0, p1, p2, p3, t) {
+      const v0 = (p2 - p0) * 0.5;
+      const v1 = (p3 - p1) * 0.5;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      return (2 * p1 - 2 * p2 + v0 + v1) * t3 +
+        (-3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 +
+        v0 * t +
+        p1;
+    }
+
+    // Seeded random number generator (Linear Congruential Generator)
+    class SeededRNG {
+      constructor(seed) {
+        this.seed = seed || 0;
+      }
+      setSeed(seed) {
+        this.seed = seed;
+      }
+      next() {
+        // LCG parameters (used by many implementations)
+        this.seed = (this.seed * 1664525 + 1013904223) % (2 ** 32);
+        return (this.seed >>> 0) / (2 ** 32);
+      }
+      random() {
+        return this.next();
+      }
+      randomInt(min, max) {
+        return Math.floor(this.random() * (max - min + 1)) + min;
+      }
+    }
+
+    class CurveEditor {
+      constructor(canvas, orientation = 'horizontal', curveId = '') {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.orientation = orientation;
+        this.curveId = curveId; // 'x' or 'y'
+        this.points = [
+          { t: 0.0, v: 0.0 },
+          { t: 0.33, v: 0.7 },
+          { t: 0.66, v: 0.3 },
+          { t: 1.0, v: 1.0 },
+        ];
+        this.dragIndex = null;
+        this.radius = 8;
+        this.maxPoints = 100; // Allow many points (effectively unlimited for manual addition)
+        this.mousePos = null; // Track mouse position for preview line
+        this._bind();
+        this.draw();
+      }
+      setMaxPoints(max) {
+        this.maxPoints = Math.max(100, max); // Set high limit to allow many points
+        this.enforceComplexity();
+      }
+      enforceComplexity() {
+        // If we have more points than max, remove excess points (keep first and last)
+        if (this.points.length > this.maxPoints) {
+          const toRemove = this.points.length - this.maxPoints;
+          // Remove points from the middle, keeping first and last
+          const indicesToRemove = [];
+          for (let i = 1; i < this.points.length - 1 && indicesToRemove.length < toRemove; i++) {
+            indicesToRemove.push(i);
+          }
+          // Remove in reverse order to maintain indices
+          indicesToRemove.reverse().forEach(idx => {
+            this.points.splice(idx, 1);
+          });
+          this.draw();
+        }
+      }
+      setPoints(pts) {
+        this.points = pts.sort((a, b) => a.t - b.t);
+        this.enforceComplexity();
+        this.draw();
+      }
+      invert() {
+        this.points.forEach(p => p.v = 1 - p.v);
+        this.draw();
+      }
+      randomize(rng, complexity) {
+        const r = rng || Math;
+        const count = complexity || this.maxPoints;
+        const pts = Array.from({ length: count }, (_, i) => ({
+          t: i / (count - 1),
+          v: r.random()
+        }));
+        this.setPoints(pts);
+      }
+      evaluateSamples(n) {
+        const samples = [];
+        for (let i = 0; i < n; i++) {
+          samples.push(this.evaluate(i / (n - 1)));
+        }
+        return samples;
+      }
+      evaluate(t) {
+        const pts = this.points;
+        if (pts.length === 1) return pts[0].v;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p1 = pts[i];
+          const p2 = pts[i + 1];
+          if (t >= p1.t && t <= p2.t) {
+            const p0 = pts[i - 1] || p1;
+            const p3 = pts[i + 2] || p2;
+            const localT = (t - p1.t) / (p2.t - p1.t || 1e-6);
+            return catmullRom(p0.v, p1.v, p2.v, p3.v, localT);
+          }
+        }
+        return t <= pts[0].t ? pts[0].v : pts[pts.length - 1].v;
+      }
+      _bind() {
+        const pos = (e) => {
+          const rect = this.canvas.getBoundingClientRect();
+          // Convert display coordinates to normalized 0-1 coordinates
+          // rect.width/height are CSS display size, canvas.width/height are internal buffer size
+          return {
+            x: (e.clientX - rect.left) / rect.width,
+            y: (e.clientY - rect.top) / rect.height,
+          };
+        };
+        this.canvas.addEventListener('pointerdown', (e) => {
+          if (!this.canvas.classList.contains('curves-enabled')) return;
+          const p = pos(e);
+          const { hit, idx } = this._hitTest(p);
+          if (hit) {
+            this.dragIndex = idx;
+          } else {
+            // add point (allow adding points by clicking on the curve)
+              const t = this.orientation === 'horizontal' ? p.x : p.y;
+              const v = this.orientation === 'horizontal' ? 1 - p.y : p.x;
+              // Don't add if too close to endpoints (t=0 or t=1)
+              if (t > 0.05 && t < 0.95) {
+                this.points.push({ t: t, v: v });
+                this.points.sort((a, b) => a.t - b.t);
+                this.dragIndex = this.points.findIndex(pt => Math.abs(pt.t - t) < 0.01 && Math.abs(pt.v - v) < 0.01);
+                this.draw();
+              // Trigger gradient update when point is added
+              if (typeof renderGradient === 'function') {
+                renderGradient();
+              }
+            }
+          }
+        });
+        // Right-click to remove points
+        this.canvas.addEventListener('contextmenu', (e) => {
+          if (!this.canvas.classList.contains('curves-enabled')) return;
+          e.preventDefault();
+          const p = pos(e);
+          const { hit, idx } = this._hitTest(p);
+          // Ensure minimum of 2 points - can only remove if we have more than 2
+          if (hit && this.points.length > 2) {
+            // Don't remove if it's the first or last point (keep endpoints)
+            if (idx > 0 && idx < this.points.length - 1) {
+              this.points.splice(idx, 1);
+              this.draw();
+              // Trigger gradient update
+              if (typeof renderGradient === 'function') {
+                renderGradient();
+              }
+            }
+          }
+        });
+        window.addEventListener('pointermove', (e) => {
+          if (this.dragIndex === null) return;
+          const p = pos(e);
+          const t = this.orientation === 'horizontal' ? p.x : p.y;
+          const v = this.orientation === 'horizontal' ? 1 - p.y : p.x;
+          
+          const clampedT = Math.min(1, Math.max(0, t));
+          const clampedV = Math.min(1, Math.max(0, v));
+          this.points[this.dragIndex] = { t: clampedT, v: clampedV };
+          this.points.sort((a, b) => a.t - b.t);
+          this.dragIndex = this.points.indexOf(this.points[this.dragIndex]);
+          
+          this.draw();
+          // Update gradient when curve points are moved
+          if (typeof renderGradient === 'function') {
+            renderGradient();
+          }
+        });
+        window.addEventListener('pointerup', () => { 
+          if (this.dragIndex !== null) {
+            // Final update when dragging ends
+            if (typeof renderGradient === 'function') {
+              renderGradient();
+            }
+          }
+          this.dragIndex = null; 
+        });
+        
+        // Helper to get active state
+        const getActiveState = () => {
+          try {
+            if (typeof activeCurve !== 'undefined') {
+              return this.curveId === activeCurve;
+            }
+          } catch (e) {
+            // Fallback
+          }
+          return this.curveId === 'x'; // Default
+        };
+        
+        // Track mouse position for preview line
+        this.canvas.addEventListener('pointermove', (e) => {
+          if (!this.canvas.classList.contains('curves-enabled')) {
+            this.mousePos = null;
+            this.draw(getActiveState());
+            return;
+          }
+          const p = pos(e);
+          this.mousePos = p;
+          // Only redraw if not currently dragging a point
+          if (this.dragIndex === null) {
+            this.draw(getActiveState());
+          }
+        });
+        
+        this.canvas.addEventListener('pointerleave', () => {
+          this.mousePos = null;
+          this.draw(getActiveState());
+        });
+      }
+      _hitTest(p) {
+        const pts = this.points;
+        for (let i = 0; i < pts.length; i++) {
+          const pt = pts[i];
+          const px = this.orientation === 'horizontal' ? pt.t : pt.v;
+          const py = this.orientation === 'horizontal' ? 1 - pt.v : pt.t;
+          const dx = (p.x - px);
+          const dy = (p.y - py);
+          if (Math.hypot(dx, dy) < 0.035) return { hit: true, idx: i };
+        }
+        return { hit: false, idx: -1 };
+      }
+      draw(isActiveOverride = null) {
+        const { ctx, canvas } = this;
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        // grid
+        ctx.strokeStyle = 'rgba(75, 85, 99, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        for (let i = 1; i < 6; i++) {
+          const x = (w / 6) * i;
+          const y = (h / 6) * i;
+          if (this.orientation === 'horizontal') {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+          } else {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+          }
+        }
+        ctx.setLineDash([]);
+        // curve - check if this is the active curve
+        // Use override if provided, otherwise try to access activeCurve
+        let isActive = false;
+        if (isActiveOverride !== null) {
+          isActive = isActiveOverride;
+        } else {
+          try {
+            if (typeof activeCurve !== 'undefined') {
+              isActive = this.curveId === activeCurve;
+            }
+          } catch (e) {
+            // If activeCurve not accessible, default to showing curve normally
+            isActive = this.curveId === 'x'; // Default to x being active
+          }
+        }
+        
+        if (isActive) {
+          // Active curve: white 4px stroke with 2px black outline
+          // Draw 6px black stroke first, then 4px white on top = 1px black on each side (2px total)
+          ctx.beginPath();
+          const samples = 200;
+          for (let i = 0; i <= samples; i++) {
+            const t = i / samples;
+            const v = this.evaluate(t);
+            const px = this.orientation === 'horizontal' ? t * w : v * w;
+            const py = this.orientation === 'horizontal' ? (1 - v) * h : t * h;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          // Draw black outline first (6px total)
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 6;
+          ctx.stroke();
+          // Draw white stroke on top (4px)
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        } else {
+          // Inactive curve: dashed, 50% transparent gray
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = 'rgba(128, 128, 128, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const samples = 200;
+        for (let i = 0; i <= samples; i++) {
+          const t = i / samples;
+          const v = this.evaluate(t);
+          const px = this.orientation === 'horizontal' ? t * w : v * w;
+          const py = this.orientation === 'horizontal' ? (1 - v) * h : t * h;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        
+        // Draw preview line if mouse is over canvas and this is the active curve
+        if (isActive && this.mousePos !== null) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          if (this.orientation === 'horizontal') {
+            // For X axis (horizontal curve): draw vertical line at mouse X position
+            const x = Math.max(0, Math.min(w, this.mousePos.x * w));
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+          } else {
+            // For Y axis (vertical curve): draw horizontal line at mouse Y position
+            const y = Math.max(0, Math.min(h, this.mousePos.y * h));
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        
+        // points
+        this.points.forEach(pt => {
+          const px = this.orientation === 'horizontal' ? pt.t * w : pt.v * w;
+          const py = this.orientation === 'horizontal' ? (1 - pt.v) * h : pt.t * h;
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#4285f4';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(px, py, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+      }
+    }
+
+    // Main gradient logic
+    const gradientCanvas = document.getElementById('gradientCanvas');
+    const gctx = gradientCanvas.getContext('2d');
+    const xEditor = new CurveEditor(document.getElementById('xCurveCanvas'), 'horizontal', 'x');
+    const yEditor = new CurveEditor(document.getElementById('yCurveCanvas'), 'vertical', 'y');
+    const widthInput = document.getElementById('widthInput');
+    const heightInput = document.getElementById('heightInput');
+    const blendMode = document.getElementById('blendMode');
+    const blendModeButtons = document.getElementById('blendModeButtons');
+    const noiseInput = document.getElementById('noiseInput');
+    const noiseValue = document.getElementById('noiseValue');
+    const featherInput = document.getElementById('featherInput');
+    const featherValue = document.getElementById('featherValue');
+    const ditherEnabled = document.getElementById('ditherEnabled');
+    const ditherAlgorithm = document.getElementById('ditherAlgorithm');
+    const ditherLevels = document.getElementById('ditherLevels');
+    
+    // Add event listeners for controls that affect the gradient
+    blendMode.addEventListener('change', () => {
+      renderGradient();
+    });
+    
+    // Blend mode buttons
+    blendModeButtons.querySelectorAll('.blend-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        blendMode.value = mode;
+        blendModeButtons.querySelectorAll('.blend-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGradient();
+      });
+    });
+    
+    // Sync blend mode select with buttons
+    blendMode.addEventListener('change', () => {
+      blendModeButtons.querySelectorAll('.blend-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.mode === blendMode.value);
+      });
+    });
+    
+    // Noise slider and input sync
+    noiseInput.addEventListener('input', () => {
+      noiseValue.value = noiseInput.value;
+      renderGradient();
+    });
+    
+    noiseValue.addEventListener('input', () => {
+      const val = Math.min(30, Math.max(0, parseInt(noiseValue.value) || 0));
+      noiseValue.value = val;
+      noiseInput.value = val;
+      renderGradient();
+    });
+    
+    // Feather slider and input sync
+    featherInput.addEventListener('input', () => {
+      featherValue.value = featherInput.value;
+      renderGradient();
+    });
+    
+    featherValue.addEventListener('input', () => {
+      const val = Math.min(40, Math.max(0, parseInt(featherValue.value) || 0));
+      featherValue.value = val;
+      featherInput.value = val;
+      renderGradient();
+    });
+    
+    // Dither controls
+    ditherEnabled.addEventListener('change', () => {
+      renderGradient();
+    });
+    
+    ditherAlgorithm.addEventListener('change', () => {
+      if (ditherEnabled.checked) {
+        renderGradient();
+      }
+    });
+    
+    ditherLevels.addEventListener('input', () => {
+      if (ditherEnabled.checked) {
+        renderGradient();
+      }
+    });
+    
+    
+    // Canvas size change handlers
+    widthInput.addEventListener('change', () => {
+      setCanvasSize();
+    });
+    
+    heightInput.addEventListener('change', () => {
+      setCanvasSize();
+    });
+    
+    const exportScale = document.getElementById('exportScale');
+    const gradientBar = document.getElementById('gradientBar');
+    const gradientStops = document.getElementById('gradientStops');
+    const removeStopBtn = document.getElementById('removeStopBtn');
+    const stopColorPicker = document.getElementById('stopColorPicker');
+    const colorHexInput = document.getElementById('colorHexInput');
+    const colorPreview = document.getElementById('colorPreview');
+    const spectrumCanvas = document.getElementById('spectrumCanvas');
+    const spectrumCtx = spectrumCanvas.getContext('2d');
+    const hueCanvas = document.getElementById('hueCanvas');
+    const hueCtx = hueCanvas.getContext('2d');
+    const spectrumMarker = document.getElementById('spectrumMarker');
+    const hueMarker = document.getElementById('hueMarker');
+
+    // Gradient stops state
+    let stopIdCounter = 0;
+    let gradientStopsArray = [
+      { id: stopIdCounter++, position: 0, color: { r: 59, g: 107, b: 255 } }, // #3b6bff
+      { id: stopIdCounter++, position: 1, color: { r: 139, g: 92, b: 246 } }  // #8b5cf6
+    ];
+    let selectedStopIndex = 0;
+
+    // Color picker state (for editing selected stop)
+    let currentHue = 240; // Blue in HSL (0-360)
+    let currentSaturation = 100; // 0-100
+    let currentLightness = 50; // 0-100
+    const toggleCurvesBtn = document.getElementById('toggleCurvesBtn');
+    const editXBtn = document.getElementById('editXBtn');
+    const editYBtn = document.getElementById('editYBtn');
+    const invertCurveBtn = document.getElementById('invertCurveBtn');
+    const multiColorRandom = document.getElementById('multiColorRandom');
+    const multiColorCount = document.getElementById('multiColorCount');
+    const seedInput = document.getElementById('seedInput');
+    const randomSeedBtn = document.getElementById('randomSeedBtn');
+    const autoRandomSeed = document.getElementById('autoRandomSeed');
+    // Seeded RNG for reproducible randomization
+    const seededRNG = new SeededRNG(0);
+
+    // Initialize complexity - fixed defaults: X = 4, Y = 3
+    const initXComplexity = 4;
+    const initYComplexity = 3;
+    xEditor.setMaxPoints(initXComplexity);
+    yEditor.setMaxPoints(initYComplexity);
+
+    // When multi-color random is used, this holds an array of RGB colors.
+    let activePalette = null;
+    
+    // Disable randomize colors checkbox by default
+    multiColorRandom.checked = false;
+    let curvesVisible = true;
+    let activeCurve = 'x'; // 'x' or 'y'
+
+    // Curves UI
+    toggleCurvesBtn.addEventListener('click', () => {
+      curvesVisible = !curvesVisible;
+      toggleCurvesBtn.classList.toggle('on', curvesVisible);
+      toggleCurvesBtn.innerHTML = `<span class="material-icons">${curvesVisible ? 'visibility' : 'visibility_off'}</span> ${curvesVisible ? 'Curves visible' : 'Curves hidden'}`;
+      document.getElementById('xCurveCanvas').style.display = curvesVisible ? '' : 'none';
+      document.getElementById('yCurveCanvas').style.display = curvesVisible ? '' : 'none';
+      // Also update class for hit testing
+      if (curvesVisible) {
+        document.getElementById('xCurveCanvas').classList.add('curves-enabled');
+        document.getElementById('yCurveCanvas').classList.add('curves-enabled');
+      } else {
+        document.getElementById('xCurveCanvas').classList.remove('curves-enabled');
+        document.getElementById('yCurveCanvas').classList.remove('curves-enabled');
+      }
+    });
+
+    // Determine which editor is active
+    function updateActiveCurveUI() {
+      editXBtn.classList.toggle('active', activeCurve === 'x');
+      editYBtn.classList.toggle('active', activeCurve === 'y');
+      // Bring canvas to front and manage pointer events
+      const xCanvas = document.getElementById('xCurveCanvas');
+      const yCanvas = document.getElementById('yCurveCanvas');
+      
+      if (activeCurve === 'x') {
+        xCanvas.style.zIndex = 10;
+        yCanvas.style.zIndex = 1;
+        // Disable pointer events on inactive canvas to prevent blocking
+        if (yCanvas.classList.contains('curves-enabled')) {
+          yCanvas.style.pointerEvents = 'none';
+        }
+        xCanvas.style.pointerEvents = 'all';
+      } else {
+        xCanvas.style.zIndex = 1;
+        yCanvas.style.zIndex = 10;
+        // Disable pointer events on inactive canvas to prevent blocking
+        if (xCanvas.classList.contains('curves-enabled')) {
+          xCanvas.style.pointerEvents = 'none';
+        }
+        yCanvas.style.pointerEvents = 'all';
+      }
+      
+      // Redraw curves to reflect active state
+      xEditor.draw(activeCurve === 'x');
+      yEditor.draw(activeCurve === 'y');
+    }
+    updateActiveCurveUI();
+
+    editXBtn.addEventListener('click', () => {
+      activeCurve = 'x';
+      updateActiveCurveUI();
+    });
+    editYBtn.addEventListener('click', () => {
+      activeCurve = 'y';
+      updateActiveCurveUI();
+    });
+
+    invertCurveBtn.addEventListener('click', () => {
+      if (activeCurve === 'x') xEditor.invert();
+      else yEditor.invert();
+    });
+
+    function setCanvasSize() {
+      // Get user-set dimensions
+      const userW = parseInt(widthInput.value) || 900;
+      const userH = parseInt(heightInput.value) || 520;
+
+      // Set canvas to user dimensions directly
+      gradientCanvas.width = userW;
+      gradientCanvas.height = userH;
+      document.getElementById('xCurveCanvas').width = userW;
+      document.getElementById('xCurveCanvas').height = userH;
+      document.getElementById('yCurveCanvas').width = userW;
+      document.getElementById('yCurveCanvas').height = userH;
+
+      // CSS will handle display sizing via max-width/max-height
+      gradientCanvas.style.width = '';
+      gradientCanvas.style.height = '';
+      document.getElementById('xCurveCanvas').style.width = '';
+      document.getElementById('xCurveCanvas').style.height = '';
+      document.getElementById('yCurveCanvas').style.width = '';
+      document.getElementById('yCurveCanvas').style.height = '';
+
+      xEditor.draw(activeCurve === 'x');
+      yEditor.draw(activeCurve === 'y');
+      renderGradient();
+    }
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    // Get color from gradient stops at position t (0-1)
+    function getColorFromGradient(t) {
+      if (activePalette && activePalette.length > 0) {
+        // Use random palette if enabled
+        const seg = 1 / (activePalette.length - 1);
+        const idxSeg = Math.min(activePalette.length - 2, Math.floor(t / seg));
+        const localT = (t - idxSeg * seg) / seg;
+        const c1 = activePalette[idxSeg];
+        const c2 = activePalette[idxSeg + 1];
+        return {
+          r: lerp(c1.r, c2.r, localT),
+          g: lerp(c1.g, c2.g, localT),
+          b: lerp(c1.b, c2.b, localT),
+        };
+      }
+      
+      // Use gradient stops
+      const stops = gradientStopsArray.sort((a, b) => a.position - b.position);
+      if (t <= stops[0].position) return stops[0].color;
+      if (t >= stops[stops.length - 1].position) return stops[stops.length - 1].color;
+      
+      for (let i = 0; i < stops.length - 1; i++) {
+        const s1 = stops[i];
+        const s2 = stops[i + 1];
+        if (t >= s1.position && t <= s2.position) {
+          const localT = (t - s1.position) / (s2.position - s1.position);
+          return {
+            r: lerp(s1.color.r, s2.color.r, localT),
+            g: lerp(s1.color.g, s2.color.g, localT),
+            b: lerp(s1.color.b, s2.color.b, localT),
+          };
+        }
+      }
+      return stops[0].color;
+    }
+
+    function renderGradient() {
+      const w = gradientCanvas.width;
+      const h = gradientCanvas.height;
+      const xSamples = xEditor.evaluateSamples(w);
+      const ySamples = yEditor.evaluateSamples(h);
+
+      const img = gctx.createImageData(w, h);
+      const noiseAmt = parseInt(noiseInput.value) / 100;
+      const feather = parseInt(featherInput.value) / 100;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          let vx = xSamples[x];
+          let vy = ySamples[y];
+          if (feather > 0) {
+            const fx = Math.sin((x / w) * Math.PI) ** feather;
+            const fy = Math.sin((y / h) * Math.PI) ** feather;
+            vx = lerp(vx, fx, 0.2);
+            vy = lerp(vy, fy, 0.2);
+          }
+          const mixVal = blend(vx, vy, blendMode.value);
+          const n = (Math.random() - 0.5) * noiseAmt;
+          const v = Math.min(1, Math.max(0, mixVal + n));
+
+          const col = getColorFromGradient(v);
+
+          img.data[idx + 0] = col.r * v + 255 * (1 - v);
+          img.data[idx + 1] = col.g * v + 255 * (1 - v);
+          img.data[idx + 2] = col.b * v + 255 * (1 - v);
+          img.data[idx + 3] = 255;
+        }
+      }
+      
+      // Apply dithering if enabled
+      if (ditherEnabled.checked) {
+        applyDithering(img, ditherAlgorithm.value, parseInt(ditherLevels.value) || 256);
+      }
+      
+      gctx.putImageData(img, 0, 0);
+    }
+
+    // Dithering algorithms
+    function applyDithering(imgData, algorithm, levels) {
+      const w = imgData.width;
+      const h = imgData.height;
+      const data = imgData.data;
+      
+      // Create a copy to work with
+      const workingData = new Uint8ClampedArray(data);
+      
+      // Quantize function
+      const quantize = (value) => {
+        const step = 255 / (levels - 1);
+        return Math.round(value / step) * step;
+      };
+      
+      // Get pixel value
+      const getPixel = (x, y, channel) => {
+        if (x < 0 || x >= w || y < 0 || y >= h) return 0;
+        const idx = (y * w + x) * 4;
+        return workingData[idx + channel];
+      };
+      
+      // Set pixel value
+      const setPixel = (x, y, channel, value) => {
+        if (x < 0 || x >= w || y < 0 || y >= h) return;
+        const idx = (y * w + x) * 4;
+        workingData[idx + channel] = Math.max(0, Math.min(255, value));
+      };
+      
+      // Add error to pixel
+      const addError = (x, y, channel, error) => {
+        if (x < 0 || x >= w || y < 0 || y >= h) return;
+        const idx = (y * w + x) * 4;
+        workingData[idx + channel] = Math.max(0, Math.min(255, workingData[idx + channel] + error));
+      };
+      
+      switch (algorithm) {
+        case 'floyd-steinberg': {
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              for (let c = 0; c < 3; c++) {
+                const oldVal = getPixel(x, y, c);
+                const newVal = quantize(oldVal);
+                const error = oldVal - newVal;
+                setPixel(x, y, c, newVal);
+                
+                addError(x + 1, y, c, error * 7 / 16);
+                addError(x - 1, y + 1, c, error * 3 / 16);
+                addError(x, y + 1, c, error * 5 / 16);
+                addError(x + 1, y + 1, c, error * 1 / 16);
+              }
+            }
+          }
+          break;
+        }
+        
+        case 'atkinson': {
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              for (let c = 0; c < 3; c++) {
+                const oldVal = getPixel(x, y, c);
+                const newVal = quantize(oldVal);
+                const error = oldVal - newVal;
+                setPixel(x, y, c, newVal);
+                
+                const fraction = error / 8;
+                addError(x + 1, y, c, fraction);
+                addError(x + 2, y, c, fraction);
+                addError(x - 1, y + 1, c, fraction);
+                addError(x, y + 1, c, fraction);
+                addError(x + 1, y + 1, c, fraction);
+                addError(x, y + 2, c, fraction);
+              }
+            }
+          }
+          break;
+        }
+        
+        case 'stucki': {
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              for (let c = 0; c < 3; c++) {
+                const oldVal = getPixel(x, y, c);
+                const newVal = quantize(oldVal);
+                const error = oldVal - newVal;
+                setPixel(x, y, c, newVal);
+                
+                addError(x + 1, y, c, error * 8 / 42);
+                addError(x + 2, y, c, error * 4 / 42);
+                addError(x - 2, y + 1, c, error * 2 / 42);
+                addError(x - 1, y + 1, c, error * 4 / 42);
+                addError(x, y + 1, c, error * 8 / 42);
+                addError(x + 1, y + 1, c, error * 4 / 42);
+                addError(x + 2, y + 1, c, error * 2 / 42);
+                addError(x - 2, y + 2, c, error * 1 / 42);
+                addError(x - 1, y + 2, c, error * 2 / 42);
+                addError(x, y + 2, c, error * 4 / 42);
+                addError(x + 1, y + 2, c, error * 2 / 42);
+                addError(x + 2, y + 2, c, error * 1 / 42);
+              }
+            }
+          }
+          break;
+        }
+        
+        case 'burkes': {
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              for (let c = 0; c < 3; c++) {
+                const oldVal = getPixel(x, y, c);
+                const newVal = quantize(oldVal);
+                const error = oldVal - newVal;
+                setPixel(x, y, c, newVal);
+                
+                addError(x + 1, y, c, error * 8 / 32);
+                addError(x + 2, y, c, error * 4 / 32);
+                addError(x - 2, y + 1, c, error * 2 / 32);
+                addError(x - 1, y + 1, c, error * 4 / 32);
+                addError(x, y + 1, c, error * 8 / 32);
+                addError(x + 1, y + 1, c, error * 4 / 32);
+                addError(x + 2, y + 1, c, error * 2 / 32);
+              }
+            }
+          }
+          break;
+        }
+        
+        case 'ordered': {
+          // Bayer 8x8 matrix
+          const bayerMatrix = [
+            [0, 32, 8, 40, 2, 34, 10, 42],
+            [48, 16, 56, 24, 50, 18, 58, 26],
+            [12, 44, 4, 36, 14, 46, 6, 38],
+            [60, 28, 52, 20, 62, 30, 54, 22],
+            [3, 35, 11, 43, 1, 33, 9, 41],
+            [51, 19, 59, 27, 49, 17, 57, 25],
+            [15, 47, 7, 39, 13, 45, 5, 37],
+            [63, 31, 55, 23, 61, 29, 53, 21]
+          ];
+          
+          const threshold = 64; // 0-63 range
+          
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              for (let c = 0; c < 3; c++) {
+                const idx = (y * w + x) * 4;
+                const oldVal = workingData[idx + c];
+                const thresholdVal = (bayerMatrix[y % 8][x % 8] / 64) * (255 / (levels - 1));
+                const newVal = oldVal + thresholdVal - 128;
+                const quantized = quantize(newVal);
+                workingData[idx + c] = Math.max(0, Math.min(255, quantized));
+              }
+            }
+          }
+          break;
+        }
+      }
+      
+      // Copy working data back to original
+      for (let i = 0; i < data.length; i++) {
+        data[i] = workingData[i];
+      }
+    }
+
+    function blend(a, b, mode) {
+      // Normalize inputs to 0-1 range
+      const base = Math.min(1, Math.max(0, a));
+      const blend = Math.min(1, Math.max(0, b));
+
+      switch (mode) {
+        case 'mul':
+          return base * blend;
+        case 'screen':
+          return 1 - (1 - base) * (1 - blend);
+        case 'overlay':
+          return base < 0.5
+            ? 2 * base * blend
+            : 1 - 2 * (1 - base) * (1 - blend);
+        case 'softlight':
+          return blend < 0.5
+            ? 2 * base * blend + base * base * (1 - 2 * blend)
+            : Math.sqrt(base) * (2 * blend - 1) + 2 * base * (1 - blend);
+        case 'hardlight':
+          return blend < 0.5
+            ? 2 * base * blend
+            : 1 - 2 * (1 - base) * (1 - blend);
+        case 'difference':
+          return Math.abs(base - blend);
+        case 'exclusion':
+          return base + blend - 2 * base * blend;
+        case 'darken':
+          return Math.min(base, blend);
+        case 'lighten':
+          return Math.max(base, blend);
+        case 'colorburn':
+          return blend === 0 ? 0 : Math.max(0, 1 - (1 - base) / blend);
+        case 'colordodge':
+          return blend === 1 ? 1 : Math.min(1, base / (1 - blend));
+        case 'avg':
+        default:
+          return (base + blend) / 2;
+      }
+    }
+
+
+    // Export
+    // Export
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const scale = parseInt(exportScale.value) || 1;
+      const originalWidth = gradientCanvas.width;
+      const originalHeight = gradientCanvas.height;
+
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = originalWidth * scale;
+      exportCanvas.height = originalHeight * scale;
+      const exportCtx = exportCanvas.getContext('2d');
+
+      const xSamples = xEditor.evaluateSamples(exportCanvas.width);
+      const ySamples = yEditor.evaluateSamples(exportCanvas.height);
+      const img = exportCtx.createImageData(exportCanvas.width, exportCanvas.height);
+      const noiseAmt = parseInt(noiseInput.value) / 100;
+      const feather = parseInt(featherInput.value) / 100;
+
+      for (let y = 0; y < exportCanvas.height; y++) {
+        for (let x = 0; x < exportCanvas.width; x++) {
+          const idx = (y * exportCanvas.width + x) * 4;
+          let vx = xSamples[x];
+          let vy = ySamples[y];
+          if (feather > 0) {
+            const fx = Math.sin((x / exportCanvas.width) * Math.PI) ** feather;
+            const fy = Math.sin((y / exportCanvas.height) * Math.PI) ** feather;
+            vx = lerp(vx, fx, 0.2);
+            vy = lerp(vy, fy, 0.2);
+          }
+          const mixVal = blend(vx, vy, blendMode.value);
+          const n = (Math.random() - 0.5) * noiseAmt;
+          const v = Math.min(1, Math.max(0, mixVal + n));
+
+          const col = getColorFromGradient(v);
+
+          img.data[idx + 0] = col.r;
+          img.data[idx + 1] = col.g;
+          img.data[idx + 2] = col.b;
+          img.data[idx + 3] = 255;
+        }
+      }
+      
+      // Apply dithering if enabled
+      if (ditherEnabled.checked) {
+        applyDithering(img, ditherAlgorithm.value, parseInt(ditherLevels.value) || 256);
+      }
+      
+      exportCtx.putImageData(img, 0, 0);
+
+      const link = document.createElement('a');
+      link.download = `gradient-${scale}x.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    // Randomize
+    // Randomize
+    // Randomize
+    document.getElementById('randomBtn').addEventListener('click', () => {
+      // Auto-generate random seed if checkbox is checked
+      if (autoRandomSeed.checked) {
+        seedInput.value = Math.floor(Math.random() * 1000000);
+      }
+      // Use seed from input
+      const seed = parseInt(seedInput.value) || 0;
+      seededRNG.setSeed(seed);
+
+      // Fixed complexity: X = 4, Y = 3
+      xEditor.randomize(seededRNG, 4);
+      yEditor.randomize(seededRNG, 3);
+
+      // Handle color randomization - randomize colors if checkbox is checked
+      // This works independently of autoRandomSeed checkbox
+      if (multiColorRandom.checked) {
+        // Always generate a fresh random seed for colors on each click
+        // This ensures colors randomize every time, regardless of autoRandomSeed setting
+        const colorSeed = Math.floor(Math.random() * 1000000);
+        seededRNG.setSeed(colorSeed);
+        randomizeGradientStops();
+      }
+      
+      // Always update the gradient after randomizing curves
+      renderGradient();
+      
+      // Always update the gradient after randomizing curves
+      renderGradient();
+    });
+
+    // Random seed button
+    randomSeedBtn.addEventListener('click', () => {
+      seedInput.value = Math.floor(Math.random() * 1000000);
+    });
+
+    // Re-randomize when seed changes
+    seedInput.addEventListener('change', () => {
+      // Optionally auto-randomize when seed changes, or just update the seed
+      // For now, just store the seed value
+    });
+
+
+    function hexToRgb(hex) {
+      const clean = hex.replace('#', '');
+      const num = parseInt(clean, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      }).join('');
+    }
+
+    function rgbToHsl(r, g, b) {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) {
+        h = s = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+          case g: h = ((b - r) / d + 2) / 6; break;
+          case b: h = ((r - g) / d + 4) / 6; break;
+        }
+      }
+      return { h: h * 360, s: s * 100, l: l * 100 };
+    }
+
+    function hslToRgb(h, s, l) {
+      h /= 360; s /= 100; l /= 100;
+      let r, g, b;
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          if (t < 0) t += 1;
+          if (t > 1) t -= 1;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+          return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+      }
+      return {
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(b * 255)
+      };
+    }
+
+    // Gradient stop management
+    function renderGradientBar() {
+      // Sort stops by position (create new array to avoid mutating original)
+      const stops = [...gradientStopsArray].sort((a, b) => a.position - b.position);
+      const gradientStr = stops.map(s => {
+        const hex = rgbToHex(s.color.r, s.color.g, s.color.b);
+        return `${hex} ${s.position * 100}%`;
+      }).join(', ');
+      gradientBar.style.background = `linear-gradient(to right, ${gradientStr})`;
+      
+      // Update stop elements efficiently
+      const stopElements = gradientStops.querySelectorAll('.gradient-stop');
+      stops.forEach((stop, sortedIndex) => {
+        // Find original index in unsorted array using unique ID
+        let index = gradientStopsArray.findIndex(s => s.id === stop.id);
+        
+        // Fallback: if ID matching fails, try to match by position and color
+        if (index === -1) {
+          index = gradientStopsArray.findIndex(s => 
+            s.position === stop.position && 
+            s.color.r === stop.color.r && 
+            s.color.g === stop.color.g && 
+            s.color.b === stop.color.b
+          );
+        }
+        
+        // If still not found, use sortedIndex as fallback (shouldn't happen)
+        if (index === -1) {
+          index = sortedIndex;
+        }
+        
+        // Calculate transform to prevent overflow at edges
+        // Stop is 24px wide, so 12px on each side
+        // At position 0, we want left edge at 0%, so translateX should be 0 instead of -50%
+        // At position 1, we want right edge at 100%, so translateX should be -100% instead of -50%
+        const isLeftmost = sortedIndex === 0;
+        const isRightmost = sortedIndex === stops.length - 1;
+        let transformX = '-50%';
+        if (isLeftmost && stop.position <= 0.01) {
+          transformX = '0%'; // Leftmost stop - align left edge
+        } else if (isRightmost && stop.position >= 0.99) {
+          transformX = '-100%'; // Rightmost stop - align right edge
+        }
+        
+        if (stopElements[sortedIndex]) {
+          // Update existing element
+          stopElements[sortedIndex].style.left = (stop.position * 100) + '%';
+          stopElements[sortedIndex].style.transform = `translate(${transformX}, -50%)`;
+          stopElements[sortedIndex].style.setProperty('--stop-transform-x', transformX);
+          stopElements[sortedIndex].className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
+          stopElements[sortedIndex].dataset.index = index;
+          stopElements[sortedIndex].style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
+        } else {
+          // Create new element if needed
+          const stopEl = document.createElement('div');
+          stopEl.className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
+          stopEl.style.left = (stop.position * 100) + '%';
+          stopEl.style.transform = `translate(${transformX}, -50%)`;
+          stopEl.style.setProperty('--stop-transform-x', transformX);
+          stopEl.style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
+          stopEl.dataset.index = index;
+          gradientStops.appendChild(stopEl);
+        }
+      });
+      
+      // Remove excess elements if stops were removed
+      while (stopElements.length > stops.length) {
+        gradientStops.removeChild(stopElements[stopElements.length - 1]);
+      }
+    }
+
+    function selectStop(index) {
+      // Ensure index is valid
+      if (index < 0 || index >= gradientStopsArray.length) {
+        console.warn('Invalid stop index:', index);
+        return;
+      }
+      selectedStopIndex = index;
+      const stop = gradientStopsArray[index];
+      if (!stop) {
+        console.warn('Stop not found at index:', index);
+        return;
+      }
+      const rgb = stop.color;
+      const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+      currentHue = hsl.h;
+      currentSaturation = hsl.s;
+      currentLightness = hsl.l;
+      // Update color picker display
+      const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+      colorHexInput.value = hex;
+      colorPreview.style.background = hex;
+      // Update spectrum and hue sliders to show the selected color
+      drawSpectrum();
+      drawHueSlider();
+      updateMarkers();
+      stopColorPicker.style.display = 'flex';
+      renderGradientBar();
+    }
+
+    let colorUpdateTimeout = null;
+    function updateSelectedStopColor(r, g, b) {
+      if (selectedStopIndex >= 0 && selectedStopIndex < gradientStopsArray.length) {
+        gradientStopsArray[selectedStopIndex].color = { r, g, b };
+        renderGradientBar();
+        
+        // Throttle gradient rendering during color updates for smooth interaction
+        if (colorUpdateTimeout) {
+          clearTimeout(colorUpdateTimeout);
+        }
+        colorUpdateTimeout = setTimeout(() => {
+          renderGradient();
+        }, 16); // ~60fps throttling
+      }
+    }
+
+    function addStop(position) {
+      // Sort stops to find adjacent stops
+      const stops = [...gradientStopsArray].sort((a, b) => a.position - b.position);
+      
+      // Find the two stops that the new position falls between
+      let col;
+      if (stops.length === 0) {
+        // Default color if no stops exist
+        col = { r: 128, g: 128, b: 128 };
+      } else if (position <= stops[0].position) {
+        // Before first stop - use first stop's color
+        col = { ...stops[0].color };
+      } else if (position >= stops[stops.length - 1].position) {
+        // After last stop - use last stop's color
+        col = { ...stops[stops.length - 1].color };
+      } else {
+        // Between two stops - interpolate
+        for (let i = 0; i < stops.length - 1; i++) {
+          const s1 = stops[i];
+          const s2 = stops[i + 1];
+          if (position >= s1.position && position <= s2.position) {
+            const localT = (position - s1.position) / (s2.position - s1.position);
+            col = {
+              r: Math.round(lerp(s1.color.r, s2.color.r, localT)),
+              g: Math.round(lerp(s1.color.g, s2.color.g, localT)),
+              b: Math.round(lerp(s1.color.b, s2.color.b, localT))
+            };
+            break;
+          }
+        }
+      }
+      
+      gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
+      selectedStopIndex = gradientStopsArray.length - 1;
+      selectStop(selectedStopIndex);
+      renderGradientBar();
+      // Immediately render gradient (no throttling for addition)
+      renderGradient();
+    }
+
+    function removeStop(index) {
+      if (gradientStopsArray.length > 2) {
+        // Clear any pending color update timeouts
+        if (colorUpdateTimeout) {
+          clearTimeout(colorUpdateTimeout);
+          colorUpdateTimeout = null;
+        }
+        
+        gradientStopsArray.splice(index, 1);
+        if (selectedStopIndex >= gradientStopsArray.length) {
+          selectedStopIndex = gradientStopsArray.length - 1;
+        }
+        
+        // Update the colors input field to match the new number of stops
+        multiColorCount.value = gradientStopsArray.length;
+        
+        renderGradientBar();
+        // Immediately render gradient (no throttling for removal)
+        renderGradient();
+      }
+    }
+
+    function randomizeGradientStops() {
+      const count = parseInt(multiColorCount.value) || 3;
+      
+      // Adjust stop count to match requested count
+      if (gradientStopsArray.length < count) {
+        // Add stops evenly distributed
+        while (gradientStopsArray.length < count) {
+          const position = gradientStopsArray.length / (count - 1);
+          const col = getColorFromGradient(position);
+          gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
+        }
+      } else if (gradientStopsArray.length > count) {
+        // Remove excess stops from middle, keeping first and last
+        while (gradientStopsArray.length > count) {
+          const toRemove = Math.floor(gradientStopsArray.length / 2);
+          if (toRemove > 0 && toRemove < gradientStopsArray.length - 1) {
+            gradientStopsArray.splice(toRemove, 1);
+          } else {
+            break; // Safety break
+          }
+        }
+      }
+      
+      // Sort by position and randomize colors and redistribute positions
+      gradientStopsArray.sort((a, b) => a.position - b.position);
+      gradientStopsArray.forEach((stop, i) => {
+        stop.position = i / (count - 1);
+        stop.color = {
+          r: seededRNG.randomInt(0, 255),
+          g: seededRNG.randomInt(0, 255),
+          b: seededRNG.randomInt(0, 255)
+        };
+      });
+      
+      // Clear activePalette since we're using gradient stops
+      activePalette = null;
+      
+      // Update selected stop if needed
+      if (selectedStopIndex >= gradientStopsArray.length) {
+        selectedStopIndex = gradientStopsArray.length - 1;
+      }
+      
+      renderGradientBar();
+      renderGradient();
+    }
+
+    function updateColorFromHsl() {
+      const rgb = hslToRgb(currentHue, currentSaturation, currentLightness);
+      const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+      colorHexInput.value = hex;
+      colorPreview.style.background = hex;
+      updateSelectedStopColor(rgb.r, rgb.g, rgb.b);
+    }
+
+    function updateColorFromHex(hex) {
+      const rgb = hexToRgb(hex);
+      const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+      currentHue = hsl.h;
+      currentSaturation = hsl.s;
+      currentLightness = hsl.l;
+      colorPreview.style.background = hex;
+      updateSelectedStopColor(rgb.r, rgb.g, rgb.b);
+      drawSpectrum();
+      drawHueSlider();
+      updateMarkers();
+    }
+
+    function drawHueSlider() {
+      const rect = hueCanvas.getBoundingClientRect();
+      hueCanvas.width = rect.width;
+      hueCanvas.height = rect.height;
+      const width = hueCanvas.width;
+      const height = hueCanvas.height;
+      const gradient = hueCtx.createLinearGradient(0, 0, width, 0);
+      for (let i = 0; i <= 360; i += 30) {
+        const rgb = hslToRgb(i, 100, 50);
+        gradient.addColorStop(i / 360, `rgb(${rgb.r},${rgb.g},${rgb.b})`);
+      }
+      hueCtx.fillStyle = gradient;
+      hueCtx.fillRect(0, 0, width, height);
+    }
+
+    function drawSpectrum() {
+      const rect = spectrumCanvas.getBoundingClientRect();
+      spectrumCanvas.width = rect.width;
+      spectrumCanvas.height = rect.height;
+      const width = spectrumCanvas.width;
+      const height = spectrumCanvas.height;
+      // Draw saturation gradient (left to right)
+      for (let x = 0; x < width; x++) {
+        const s = (x / width) * 100;
+        // Draw lightness gradient (top to bottom)
+        const grad = spectrumCtx.createLinearGradient(0, 0, 0, height);
+        // Start from White (100%) at top to Black (0%) at bottom
+        for (let l = 100; l >= 0; l -= 10) {
+          const rgb = hslToRgb(currentHue, s, l);
+          grad.addColorStop((100 - l) / 100, `rgb(${rgb.r},${rgb.g},${rgb.b})`);
+        }
+        spectrumCtx.fillStyle = grad;
+        spectrumCtx.fillRect(x, 0, 1, height);
+      }
+    }
+
+    function updateMarkers() {
+      const spectrumRect = spectrumCanvas.getBoundingClientRect();
+      const hueRect = hueCanvas.getBoundingClientRect();
+      const sx = (currentSaturation / 100) * spectrumRect.width;
+      const sy = (1 - currentLightness / 100) * spectrumRect.height;
+      const hx = (currentHue / 360) * hueRect.width;
+      spectrumMarker.style.left = sx + 'px';
+      spectrumMarker.style.top = sy + 'px';
+      hueMarker.style.left = hx + 'px';
+    }
+
+
+    // Gradient stop interactions
+    document.querySelector('.gradient-bar-container').addEventListener('click', (e) => {
+      // Only add stop if clicking on the gradient bar itself, not on a stop
+      if (!e.target.classList.contains('gradient-stop')) {
+        const rect = gradientBar.getBoundingClientRect();
+        const position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        addStop(position);
+      }
+    });
+
+    gradientStops.addEventListener('click', (e) => {
+      if (e.target.classList.contains('gradient-stop')) {
+        const index = parseInt(e.target.dataset.index);
+        selectStop(index);
+      }
+    });
+
+    // Drag stops
+    let draggingStop = null;
+    let renderGradientTimeout = null;
+    
+    gradientStops.addEventListener('pointerdown', (e) => {
+      if (e.target.classList.contains('gradient-stop')) {
+        const index = parseInt(e.target.dataset.index);
+        draggingStop = {
+          index: index,
+          element: e.target
+        };
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Disable pointer events on all other stops while dragging
+        // This allows the dragged stop to pass over other stops
+        const allStops = gradientStops.querySelectorAll('.gradient-stop');
+        allStops.forEach((stop) => {
+          const stopIndex = parseInt(stop.dataset.index);
+          if (stopIndex !== index) {
+            stop.style.pointerEvents = 'none';
+          } else {
+            // Bring dragged stop to front with higher z-index
+            stop.style.zIndex = '1000';
+          }
+        });
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (draggingStop) {
+        // Only handle stop dragging if we're actually dragging a stop
+        const rect = gradientBar.getBoundingClientRect();
+        const position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        gradientStopsArray[draggingStop.index].position = position;
+        
+        // Update gradient bar immediately for smooth visual feedback
+        renderGradientBar();
+        
+        // Throttle gradient rendering during drag for performance
+        if (renderGradientTimeout) {
+          clearTimeout(renderGradientTimeout);
+        }
+        renderGradientTimeout = setTimeout(() => {
+          renderGradient();
+        }, 16); // ~60fps throttling
+      }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (draggingStop) {
+        // Clear any pending render
+        if (renderGradientTimeout) {
+          clearTimeout(renderGradientTimeout);
+          renderGradientTimeout = null;
+        }
+        // Final render on release
+        renderGradient();
+        
+        // Re-enable pointer events on all stops
+        const allStops = gradientStops.querySelectorAll('.gradient-stop');
+        allStops.forEach((stop) => {
+          stop.style.pointerEvents = 'all';
+          stop.style.zIndex = '';
+        });
+        
+        draggingStop = null;
+      }
+    });
+
+    removeStopBtn.addEventListener('click', () => {
+      if (selectedStopIndex >= 0 && gradientStopsArray.length > 2) {
+        removeStop(selectedStopIndex);
+      }
+    });
+
+    // Invert gradient function
+    function invertGradient() {
+      gradientStopsArray.forEach(stop => {
+        stop.position = 1 - stop.position;
+      });
+      renderGradientBar();
+      renderGradient();
+    }
+
+    const invertGradientBtn = document.getElementById('invertGradientBtn');
+    invertGradientBtn.addEventListener('click', () => {
+      invertGradient();
+    });
+
+    // Randomize colors checkbox and count input handlers
+    multiColorRandom.addEventListener('change', () => {
+      if (multiColorRandom.checked) {
+        // Use seed from input
+        const seed = parseInt(seedInput.value) || 0;
+        seededRNG.setSeed(seed);
+        randomizeGradientStops();
+      } else {
+        // When unchecked, keep current stops but clear activePalette
+        activePalette = null;
+        renderGradient();
+      }
+    });
+
+    multiColorCount.addEventListener('change', () => {
+      if (multiColorRandom.checked) {
+        // Use seed from input
+        const seed = parseInt(seedInput.value) || 0;
+        seededRNG.setSeed(seed);
+        randomizeGradientStops();
+      }
+    });
+
+    // Color picker interactions (for editing selected stop)
+    spectrumCanvas.addEventListener('pointerdown', (e) => {
+      e.stopPropagation(); // Prevent event from reaching other handlers
+      const rect = spectrumCanvas.getBoundingClientRect();
+      const update = (ev) => {
+        const x = Math.max(0, Math.min(ev.clientX - rect.left, rect.width));
+        const y = Math.max(0, Math.min(ev.clientY - rect.top, rect.height));
+        currentSaturation = (x / rect.width) * 100;
+        currentLightness = 100 - (y / rect.height) * 100;
+        updateColorFromHsl();
+        updateMarkers();
+      };
+      update(e);
+      const onMove = (ev) => {
+        update(ev);
+        ev.stopPropagation(); // Prevent interference with curve editor
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+
+    hueCanvas.addEventListener('pointerdown', (e) => {
+      e.stopPropagation(); // Prevent event from reaching other handlers
+      const rect = hueCanvas.getBoundingClientRect();
+      const update = (ev) => {
+        const x = Math.max(0, Math.min(ev.clientX - rect.left, rect.width));
+        currentHue = (x / rect.width) * 360;
+        drawSpectrum();
+        updateColorFromHsl();
+        updateMarkers();
+      };
+      update(e);
+      const onMove = (ev) => {
+        update(ev);
+        ev.stopPropagation(); // Prevent interference with curve editor
+      };
+      const onUp = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    });
+
+    colorHexInput.addEventListener('change', () => {
+      let val = colorHexInput.value;
+      if (!val.startsWith('#')) val = '#' + val;
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        updateColorFromHex(val);
+      }
+    });
+
+    // Initial setup
+    // Ensure curves are enabled by default
+    if (curvesVisible) {
+      document.getElementById('xCurveCanvas').classList.add('curves-enabled');
+      document.getElementById('yCurveCanvas').classList.add('curves-enabled');
+    }
+    renderGradientBar();
+    selectStop(0);
+    drawHueSlider();
+    drawSpectrum();
+    updateMarkers();
+        renderGradient();
+    setCanvasSize();
+    window.addEventListener('resize', setCanvasSize);
+  </script>
+</body>
+
+</html>
