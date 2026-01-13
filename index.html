@@ -2136,7 +2136,8 @@
       { id: stopIdCounter++, position: 0.75, color: { r: 25, g: 130, b: 196 } }, // #1982c4
       { id: stopIdCounter++, position: 1, color: { r: 106, g: 76, b: 147 } }      // #6a4c93
     ];
-    let selectedStopIndex = 0;
+    let selectedStopIndex = -1; // -1 means no stop is selected
+    let selectedStopId = null; // Store the ID of the selected stop for reliable lookup
 
     // Color picker state (for editing selected stop)
     let currentHue = 240; // Blue in HSL (0-360)
@@ -3189,18 +3190,21 @@
           transformX = '-100%'; // Rightmost stop - align right edge
         }
         
+        // Check if this stop is selected by comparing ID (more reliable than index after sorting)
+        const isSelected = selectedStopId !== null ? stop.id === selectedStopId : (index === selectedStopIndex);
+        
         if (stopElements[sortedIndex]) {
           // Update existing element
           stopElements[sortedIndex].style.left = (stop.position * 100) + '%';
           stopElements[sortedIndex].style.transform = `translate(${transformX}, -50%)`;
           stopElements[sortedIndex].style.setProperty('--stop-transform-x', transformX);
-          stopElements[sortedIndex].className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
+          stopElements[sortedIndex].className = 'gradient-stop' + (isSelected ? ' selected' : '');
           stopElements[sortedIndex].dataset.index = index;
           stopElements[sortedIndex].style.backgroundColor = rgbToHex(stop.color.r, stop.color.g, stop.color.b);
         } else {
           // Create new element if needed
           const stopEl = document.createElement('div');
-          stopEl.className = 'gradient-stop' + (index === selectedStopIndex ? ' selected' : '');
+          stopEl.className = 'gradient-stop' + (isSelected ? ' selected' : '');
           stopEl.style.left = (stop.position * 100) + '%';
           stopEl.style.transform = `translate(${transformX}, -50%)`;
           stopEl.style.setProperty('--stop-transform-x', transformX);
@@ -3222,17 +3226,25 @@
     }
 
     function selectStop(index) {
-      // Ensure index is valid
-      if (index < 0 || index >= gradientStopsArray.length) {
+      // Allow -1 to deselect
+      if (index < -1 || index >= gradientStopsArray.length) {
         console.warn('Invalid stop index:', index);
         return;
       }
       selectedStopIndex = index;
+      if (index < 0) {
+        // Deselect - hide color picker
+        selectedStopId = null;
+        stopColorPicker.style.display = 'none';
+        renderGradientBar();
+        return;
+      }
       const stop = gradientStopsArray[index];
       if (!stop) {
         console.warn('Stop not found at index:', index);
         return;
       }
+      selectedStopId = stop.id; // Store the ID for reliable lookup
       const rgb = stop.color;
       const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
       currentHue = hsl.h;
@@ -3252,8 +3264,23 @@
 
     let colorUpdateTimeout = null;
     function updateSelectedStopColor(r, g, b) {
-      if (selectedStopIndex >= 0 && selectedStopIndex < gradientStopsArray.length) {
-        gradientStopsArray[selectedStopIndex].color = { r, g, b };
+      // Find the selected stop by ID (more reliable than index after sorting)
+      let selectedStop = null;
+      if (selectedStopId !== null) {
+        selectedStop = gradientStopsArray.find(s => s.id === selectedStopId);
+      } else if (selectedStopIndex >= 0 && selectedStopIndex < gradientStopsArray.length) {
+        selectedStop = gradientStopsArray[selectedStopIndex];
+        // Update selectedStopId for future lookups
+        if (selectedStop) {
+          selectedStopId = selectedStop.id;
+        }
+      }
+      if (selectedStop) {
+        selectedStop.color = { r, g, b };
+        // Update selectedStopIndex to match the current position in array (for compatibility)
+        if (selectedStopId !== null) {
+          selectedStopIndex = gradientStopsArray.findIndex(s => s.id === selectedStopId);
+        }
         renderGradientBar();
         
         // Throttle gradient rendering during color updates for smooth interaction
@@ -3299,8 +3326,11 @@
         }
       }
       
-      gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
-      selectedStopIndex = gradientStopsArray.length - 1;
+      const newStop = { id: stopIdCounter++, position, color: col };
+      gradientStopsArray.push(newStop);
+      // Find the index of the newly added stop by ID (in case array gets sorted)
+      selectedStopIndex = gradientStopsArray.findIndex(s => s.id === newStop.id);
+      selectedStopId = newStop.id; // Store the ID for reliable lookup
       selectStop(selectedStopIndex);
       renderGradientBar();
       // Immediately render gradient (no throttling for addition)
@@ -3455,6 +3485,9 @@
 
     // Gradient stop interactions
     let wasDragging = false; // Track if we just finished dragging
+    let isPointerDown = false;
+    let hasMoved = false;
+    let pointerDownX = null;
     const gradientBarContainer = document.querySelector('.gradient-bar-container');
     
     // Prevent pointerdown on container from interfering with stop dragging
@@ -3505,7 +3538,7 @@
           const stopId = parseInt(stopElement.dataset.stopId);
           index = gradientStopsArray.findIndex(s => s.id === stopId);
         }
-        if (isNaN(index) || index < 0) return;
+        if (isNaN(index) || index < 0 || index >= gradientStopsArray.length) return;
         
         isPointerDown = true;
         hasMoved = false;
@@ -3526,6 +3559,7 @@
         // Store original positions of all stops to prevent them from moving
         originalStopPositions = gradientStopsArray.map((stop, idx) => ({
           index: idx,
+          id: stop.id,
           position: stop.position
         }));
         
@@ -3550,15 +3584,18 @@
         if (!hasMoved && pointerDownX !== null) {
           if (Math.abs(e.clientX - pointerDownX) > 3) {
             hasMoved = true;
+          } else {
+            return; // Don't process drag until mouse has moved enough
           }
         }
         
-        if (hasMoved && draggingStop.stopId) {
+        // Process drag if mouse has moved
+        if (hasMoved && draggingStop && draggingStop.stopId) {
           // Find the dragged stop by ID (not index, to ensure we get the right one)
           const draggedStop = gradientStopsArray.find(s => s.id === draggingStop.stopId);
           if (!draggedStop) return;
           
-          const rect = gradientBar.getBoundingClientRect();
+          const rect = gradientBarContainer.getBoundingClientRect();
           let position = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
           
           // Constrain position to avoid overlapping with other stops (minimum distance)
@@ -3575,12 +3612,17 @@
               if (position > otherPosition) {
                 position = otherPosition + minDistance;
               } else {
-                position = otherPosition - minDistance;
+                position = Math.max(0, otherPosition - minDistance);
               }
               // Clamp to valid range
               position = Math.max(0, Math.min(1, position));
             }
           });
+          
+          // Ensure position is valid (not NaN or undefined)
+          if (isNaN(position) || position === undefined) {
+            return;
+          }
           
           // Restore all other stops to their original positions (by ID, not index)
           originalStopPositions.forEach(original => {
@@ -3595,6 +3637,10 @@
           
           // Update ONLY the dragged stop's position (never touch color)
           draggedStop.position = position;
+          
+          // Sort stops by position to maintain order
+          // Note: This mutates the array, but the draggedStop reference is still valid
+          gradientStopsArray.sort((a, b) => a.position - b.position);
           
           // Update gradient bar immediately for smooth visual feedback
           renderGradientBar();
@@ -3635,6 +3681,11 @@
         setTimeout(() => {
           wasDragging = false;
         }, 100);
+        
+        // Reset pointer state
+        isPointerDown = false;
+        hasMoved = false;
+        pointerDownX = null;
         
         // Clear original positions
         originalStopPositions = null;
@@ -3882,7 +3933,7 @@
     xEditor.setMaxPoints(xComplexity);
     yEditor.setMaxPoints(yComplexity);
     renderGradientBar();
-    selectStop(0);
+    selectStop(0); // Select first stop by default to show color picker
     drawHueSlider();
     drawSpectrum();
     updateMarkers();
