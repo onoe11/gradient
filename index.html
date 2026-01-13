@@ -298,7 +298,8 @@
       font-weight: 700;
       position: relative;
       overflow: hidden;
-      z-index: 1;
+      z-index: 0;
+      transition: background 0.1s ease, box-shadow 0.1s ease;
     }
 
     #randomBtn > * {
@@ -324,7 +325,8 @@
       );
       transition: left 0s;
       pointer-events: none;
-      z-index: 0;
+      z-index: 2;
+      border-radius: 10px;
     }
 
     #randomBtn.animating::before {
@@ -341,6 +343,50 @@
       background: #e8e8e8;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     }
+
+    #randomBtn:hover .material-icons,
+    #randomBtn:hover span {
+      color: #1a1a1a;
+    }
+
+    #randomBtn::after {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border-radius: 12px;
+      padding: 2px;
+      opacity: 0;
+      transition: opacity 0.1s ease, padding 0.1s ease;
+      pointer-events: none;
+      background: 
+        conic-gradient(from 0deg, 
+          rgba(255, 89, 94, 1) 0deg,
+          rgba(255, 202, 58, 1) 60deg,
+          rgba(138, 201, 38, 1) 120deg,
+          rgba(25, 130, 196, 1) 180deg,
+          rgba(106, 76, 147, 1) 240deg,
+          rgba(255, 89, 94, 1) 300deg,
+          rgba(255, 89, 94, 1) 360deg
+        );
+      -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      z-index: 3;
+    }
+
+    #randomBtn:hover::after {
+      opacity: 1;
+      padding: 4px;
+    }
+
 
     #randomBtn:active {
       transform: none;
@@ -378,6 +424,11 @@
       align-items: center;
       justify-content: flex-start;
       gap: 4px;
+      transition: background 0.1s ease;
+    }
+
+    #exportBtn:hover {
+      background: #FFEB3B !important;
     }
 
     @keyframes spin {
