@@ -2461,6 +2461,7 @@
         cachedBlendMode = blendModeValue;
       }
 
+      // Pattern uniforms
       // Cache gradient stops - only recompute if changed
       const stopsKey = JSON.stringify(gradientStopsArray.map(s => ({ p: s.position, r: s.color.r, g: s.color.g, b: s.color.b })));
       const paletteKey = activePalette ? JSON.stringify(activePalette.map(c => ({ r: c.r, g: c.g, b: c.b }))) : '';
@@ -3244,19 +3245,32 @@
       renderGradient();
     });
 
+    let canvasSizeInitialized = false;
+    
     function setCanvasSize() {
       saveHistory(); // Save state before changing canvas size
-      // Fit to available output space with margins to avoid UI overlap
-      const outputArea = document.querySelector('.output-area');
-      const availableW = outputArea ? Math.max(1, Math.floor(outputArea.clientWidth)) : 900;
-      const availableH = outputArea ? Math.max(1, Math.floor(outputArea.clientHeight)) : 520;
-      const marginFactor = 0.8; // reduce size proportionally on both axes
-      const userW = Math.max(300, Math.floor(availableW * marginFactor));
-      const userH = Math.max(200, Math.floor(availableH * marginFactor));
+      
+      let userW, userH;
+      
+      // Only set initial size on first load, otherwise use user input values
+      if (!canvasSizeInitialized) {
+        // Fit to available output space with margins to avoid UI overlap
+        const outputArea = document.querySelector('.output-area');
+        const availableW = outputArea ? Math.max(1, Math.floor(outputArea.clientWidth)) : 900;
+        const availableH = outputArea ? Math.max(1, Math.floor(outputArea.clientHeight)) : 520;
+        const marginFactor = 0.8; // reduce size proportionally on both axes
+        userW = Math.max(300, Math.floor(availableW * marginFactor));
+        userH = Math.max(200, Math.floor(availableH * marginFactor));
 
-      // Sync inputs to actual size
-      if (widthInput) widthInput.value = userW;
-      if (heightInput) heightInput.value = userH;
+        // Set initial values in inputs
+        if (widthInput) widthInput.value = userW;
+        if (heightInput) heightInput.value = userH;
+        canvasSizeInitialized = true;
+      } else {
+        // Use current input values
+        userW = parseInt(widthInput.value) || 900;
+        userH = parseInt(heightInput.value) || 520;
+      }
 
       // Set canvas to user dimensions directly
       gradientCanvas.width = userW;
@@ -4725,8 +4739,8 @@
     drawSpectrum();
     updateMarkers();
     initWebGL(); // Initialize WebGL renderer
+    // Initialize canvas size based on screen, but allow user to change it
     setCanvasSize();
-    window.addEventListener('resize', setCanvasSize);
     
     // Initialize button states (both disabled until first user action)
     updateHistoryButtons();
