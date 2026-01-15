@@ -190,7 +190,6 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    
 
     .help-button {
       position: fixed;
@@ -644,22 +643,11 @@
       pointer-events: auto;
     }
 
-    #ditherAlgorithmButtons {
-      grid-template-columns: repeat(5, 1fr);
+    label > .blend-mode-buttons {
       pointer-events: none;
     }
 
-    #ditherAlgorithmButtons > .blend-btn {
-      pointer-events: auto;
-    }
-
-    label > .blend-mode-buttons,
-    label > #ditherAlgorithmButtons {
-      pointer-events: none;
-    }
-
-    label > .blend-mode-buttons > .blend-btn,
-    label > #ditherAlgorithmButtons > .blend-btn {
+    label > .blend-mode-buttons > .blend-btn {
       pointer-events: auto;
     }
 
@@ -688,10 +676,6 @@
       filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.48)) !important;
     }
 
-    #ditherAlgorithmButtons > .blend-btn:hover .material-icons,
-    #ditherAlgorithmButtons > .blend-btn:hover .material-symbols-outlined {
-      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.48)) !important;
-    }
 
     .gradient-controls .blend-btn:hover .material-icons,
     .gradient-controls .blend-btn:hover .material-symbols-outlined {
@@ -1387,8 +1371,8 @@
             </div>
           </div>
           <div class="color-picker-container" style="margin-top:12px;">
-            <div class="color-preview" id="colorPreview" style="background:#ff595e;"></div>
-            <input type="text" id="colorHexInput" value="#ff595e" placeholder="#ff595e" maxlength="7" />
+            <div class="color-preview" id="colorPreview"></div>
+            <input type="text" id="colorHexInput" placeholder="#ff595e" maxlength="7" />
           </div>
           <div class="stop-color-picker" id="stopColorPicker" style="display:none;">
           <div class="spectrum-container">
@@ -1399,7 +1383,7 @@
             <canvas id="hueCanvas" width="200" height="20"></canvas>
             <div class="hue-marker" id="hueMarker"></div>
           </div>
-          </div>
+        </div>
           <div style="margin-top:12px; display:flex; flex-direction:column; gap:12px;">
             <button class="blend-btn" id="randomizeColorsBtn" title="Randomize Colors" style="width:100%; aspect-ratio: auto; height: auto; padding: 8px 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
               <span class="material-icons" style="font-size:18px;">palette</span>
@@ -1410,53 +1394,43 @@
               <div class="slider-with-input" style="width:100%;">
                 <input type="range" id="multiColorCountSlider" value="8" min="2" max="20" style="flex:1; min-width:0; max-width:calc(100% - 60px);" />
                 <input type="number" id="multiColorCount" value="8" min="2" max="20" step="1" style="width:45px; padding:4px 6px; font-size:12px; flex-shrink:0;" />
-              </div>
+      </div>
             </label>
           </div>
         </div>
       </div>
 
-
         <div class="panel">
-        <h3>Dither</h3>
+        <h3>Glitter</h3>
         <div class="controls">
           <div style="margin-bottom: 8px;">
-            <label style="font-size:11px; display:block; margin-bottom:4px;">Enable dithering</label>
+            <label style="font-size:11px; display:block; margin-bottom:4px;">Enable Glitter</label>
             <label class="ios-switch" style="display:block;">
-              <input type="checkbox" id="ditherEnabled" />
+              <input type="checkbox" id="glitterEnabled" />
               <span class="ios-switch-slider"></span>
             </label>
               </div>
           <label>
-            Algorithm
-            <div class="blend-mode-buttons" id="ditherAlgorithmButtons">
-              <button class="blend-btn" data-algorithm="floyd-steinberg" title="Floyd-Steinberg"><span class="material-icons">grid_on</span></button>
-              <button class="blend-btn" data-algorithm="ordered" title="Ordered (Bayer)"><span class="material-icons">view_module</span></button>
-              <button class="blend-btn" data-algorithm="atkinson" title="Atkinson"><span class="material-icons">apps</span></button>
-              <button class="blend-btn" data-algorithm="stucki" title="Stucki"><span class="material-icons">dashboard</span></button>
-              <button class="blend-btn" data-algorithm="burkes" title="Burkes"><span class="material-icons">view_quilt</span></button>
+            Density
+            <div class="slider-with-input">
+              <input type="range" id="glitterDensityInput" value="50" min="1" max="100" />
+              <input type="number" id="glitterDensityValue" value="50" min="1" max="100" style="width:60px; padding:4px 6px; font-size:12px;" />
             </div>
-            <select id="ditherAlgorithm" style="display:none;">
-              <option value="floyd-steinberg" selected>Floyd-Steinberg</option>
-              <option value="ordered">Ordered (Bayer)</option>
-              <option value="atkinson">Atkinson</option>
-              <option value="stucki">Stucki</option>
-              <option value="burkes">Burkes</option>
-            </select>
             </label>
           <label>
-            Levels
+            Size Min
             <div class="slider-with-input">
-              <input type="range" id="ditherLevelsSlider" value="2" min="2" max="8" />
-              <input type="number" id="ditherLevels" value="2" min="2" max="256" step="1" style="width:60px; padding:4px 6px; font-size:12px;" />
+              <input type="range" id="glitterSizeMinInput" value="1" min="0.5" max="5" step="0.5" />
+              <input type="number" id="glitterSizeMinValue" value="1" min="0.5" max="5" step="0.5" style="width:60px; padding:4px 6px; font-size:12px;" />
           </div>
-            <span class="note" style="font-size:11px; margin-top:4px;">Number of color levels (2-256)</span>
             </label>
-          <div style="margin-top: 12px; padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; border: 1px solid var(--input-border);">
-            <p style="margin: 0; font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
-              <strong style="color: var(--text);">Tip:</strong> When using dithering, for best results use canvas resolution under 1000px and export with 3–4x scale.
-            </p>
+          <label>
+            Size Max
+            <div class="slider-with-input">
+              <input type="range" id="glitterSizeMaxInput" value="3" min="1" max="4" step="0.5" />
+              <input type="number" id="glitterSizeMaxValue" value="3" min="1" max="4" step="0.5" style="width:60px; padding:4px 6px; font-size:12px;" />
           </div>
+            </label>
         </div>
       </div>
 
@@ -1487,6 +1461,8 @@
       style="padding:8px 12px; font-size:13px;"><span class="material-icons">swap_horiz</span> Invert</button>
     <button class="btn secondary" id="randomizeCurvesBtn" style="padding:8px 12px; font-size:13px;"><span class="material-icons">casino</span> Randomize Curves</button>
     <div class="curve-separator"></div>
+    <button class="toggle-btn on" id="curveSmoothingToggle" style="padding:8px 12px 8px 12px; font-size:13px; width: auto; min-width: 120px; flex-shrink:0; display: flex; align-items: center; justify-content: flex-start; gap: 4px;" title="Toggle curve smoothing"><span class="material-icons" style="width: 16px; flex-shrink: 0; display: inline-block; text-align: center;">waves</span><span>Smoothing</span></button>
+    <div class="curve-separator"></div>
     <button class="toggle-btn on" id="toggleCurvesBtn" style="padding:8px 12px; font-size:13px; width: 140px; flex-shrink:0; display: flex; align-items: center; justify-content: flex-start; gap: 4px;"><span class="material-icons toggle-curves-icon" style="width: 16px; flex-shrink: 0; display: inline-block; text-align: center;">visibility</span><span class="toggle-curves-text">Curves visible</span></button>
   </div>
 
@@ -1499,7 +1475,7 @@
       <option value="4">4x</option>
     </select>
     <button class="btn" id="exportBtn"
-      style="background:#A2D729; box-shadow:0 4px 12px rgba(162, 215, 41, 0.25); color:#1a1a1a; min-width: auto; width: auto; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 12px;"><span class="material-icons export-icon" style="color:#1a1a1a; width: 16px; flex-shrink: 0; display: inline-block; text-align: center;">download</span><span class="export-text">Export PNG</span></button>
+      style="background:#A2D729; box-shadow:0 4px 12px rgba(162, 215, 41, 0.25); color:#1a1a1a; min-width: 140px; width: 140px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 12px;"><span class="material-icons export-icon" style="color:#1a1a1a; width: 16px; flex-shrink: 0; display: inline-block; text-align: center;">download</span><span class="export-text">Export PNG</span></button>
   </div>
 
   <button class="help-button" id="helpButton" title="Help">
@@ -1544,9 +1520,13 @@
 
   <script>
     // Utility: Catmull-Rom spline for smooth curves through points.
-    function catmullRom(p0, p1, p2, p3, t) {
-      const v0 = (p2 - p0) * 0.5;
-      const v1 = (p3 - p1) * 0.5;
+    // tension: -1 to 1, where -1 is tight (inward), 0 is standard, 1 is loose (outward)
+    function catmullRom(p0, p1, p2, p3, t, tension = 0) {
+      // Adjust control points based on tension
+      // Negative tension pulls curve inward, positive pushes it outward
+      const s = (1 - tension) * 0.5;
+      const v0 = (p2 - p0) * s;
+      const v1 = (p3 - p1) * s;
       const t2 = t * t;
       const t3 = t2 * t;
       return (2 * p1 - 2 * p2 + v0 + v1) * t3 +
@@ -1647,6 +1627,11 @@
       evaluate(t) {
         const pts = this.points;
         if (pts.length === 1) return pts[0].v;
+        
+        // Get smoothing toggle state (true = smooth, false = sharp)
+        const smoothingToggle = document.getElementById('curveSmoothingToggle');
+        const isSmooth = smoothingToggle ? smoothingToggle.classList.contains('on') : true;
+        
         for (let i = 0; i < pts.length - 1; i++) {
           const p1 = pts[i];
           const p2 = pts[i + 1];
@@ -1654,8 +1639,16 @@
             const p0 = pts[i - 1] || p1;
             const p3 = pts[i + 2] || p2;
             const localT = (t - p1.t) / (p2.t - p1.t || 1e-6);
-            // Clamp the result to [0, 1] to prevent curves from going beyond canvas boundaries
-            return Math.max(0, Math.min(1, catmullRom(p0.v, p1.v, p2.v, p3.v, localT)));
+            
+            if (isSmooth) {
+              // Smooth catmull-rom interpolation
+              const result = catmullRom(p0.v, p1.v, p2.v, p3.v, localT, 0);
+              return Math.max(0, Math.min(1, result));
+            } else {
+              // Linear interpolation (sharp/sawtooth)
+              const result = p1.v + (p2.v - p1.v) * localT;
+              return Math.max(0, Math.min(1, result));
+            }
           }
         }
         const result = t <= pts[0].t ? pts[0].v : pts[pts.length - 1].v;
@@ -2091,10 +2084,48 @@
         uniform vec3 u_stopColors[32];
         uniform int u_paletteCount;
         uniform vec3 u_paletteColors[32];
+        uniform int u_pixelizationEnabled;
+        uniform float u_pixelizationSize;
+        uniform int u_voronoiEnabled;
+        uniform float u_voronoiScale;
+        uniform float u_voronoiIntensity;
+        uniform int u_waveDistortionEnabled;
+        uniform float u_waveAmplitude;
+        uniform float u_waveFrequency;
+        uniform int u_rippleDistortionEnabled;
+        uniform float u_rippleStrength;
+        uniform float u_rippleSpeed;
+        uniform int u_twirlDistortionEnabled;
+        uniform float u_twirlAngle;
+        uniform float u_twirlRadius;
+        uniform int u_glitterEnabled;
+        uniform float u_glitterDensity;
+        uniform float u_glitterSizeMin;
+        uniform float u_glitterSizeMax;
+        uniform int u_glitterDebugMode;
         varying vec2 v_uv;
 
         float lerp(float a, float b, float t) {
           return a + (b - a) * t;
+        }
+
+        // Hash function for Voronoi noise
+        vec2 hash2(vec2 p) {
+          p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+          return fract(sin(p) * 43758.5453);
+        }
+
+        // Hash function for glitter particles
+        float hash(vec2 p) {
+          float h = dot(p, vec2(127.1, 311.7)) + dot(p, vec2(269.5, 183.3));
+          return fract(sin(h) * 43758.5453);
+        }
+
+        vec3 hash3(vec2 p) {
+          float h1 = hash(p);
+          float h2 = hash(p + vec2(1.0, 0.0));
+          float h3 = hash(p + vec2(0.0, 1.0));
+          return vec3(h1, h2, h3);
         }
 
         float blend(float base, float blend, int mode) {
@@ -2196,10 +2227,35 @@
           float x = coord.x;
           float y = coord.y;
           
+          // Apply distortions
+          if (u_waveDistortionEnabled > 0) {
+            float wave = sin(coord.y / u_resolution.y * u_waveFrequency * 6.28318) * u_waveAmplitude;
+            coord.x += wave;
+          }
+          
+          if (u_rippleDistortionEnabled > 0) {
+            vec2 center = u_resolution * 0.5;
+            vec2 toCenter = coord - center;
+            float dist = length(toCenter);
+            float angle = atan(toCenter.y, toCenter.x);
+            float ripple = sin(dist / u_resolution.x * u_rippleSpeed * 6.28318) * u_rippleStrength;
+            coord = center + toCenter * (1.0 + ripple / max(dist, 1.0));
+          }
+          
+          if (u_twirlDistortionEnabled > 0) {
+            vec2 center = u_resolution * 0.5;
+            vec2 toCenter = coord - center;
+            float dist = length(toCenter);
+            float angle = atan(toCenter.y, toCenter.x);
+            float twirlAmount = (1.0 - clamp(dist / u_twirlRadius, 0.0, 1.0)) * u_twirlAngle * 0.0174533;
+            angle += twirlAmount;
+            coord = center + vec2(cos(angle), sin(angle)) * dist;
+          }
+          
           // Sample curve values (normalized coordinates 0-1, WebGL auto-normalizes LUMINANCE to 0-1)
           // Clamp UV coordinates to prevent out-of-bounds access
-          float clampedU = clamp(v_uv.x, 0.0, 1.0);
-          float clampedV = clamp(v_uv.y, 0.0, 1.0);
+          float clampedU = clamp(coord.x / u_resolution.x, 0.0, 1.0);
+          float clampedV = clamp(coord.y / u_resolution.y, 0.0, 1.0);
           
           float vx = texture2D(u_xSamples, vec2(clampedU, 0.5)).r;
           
@@ -2234,6 +2290,121 @@
           
           // Get color from gradient
           vec3 col = getColorFromGradient(v);
+          
+          // Apply glitter if enabled
+          if (u_glitterEnabled > 0) {
+            // Density controls both cell size and spawn probability
+            // Map density (0-5000) to cell size (30.0 to 5.0 pixels) - keep cells visible
+            float minCellSize = 5.0;
+            float maxCellSize = 30.0;
+            float densityNormalized = clamp(u_glitterDensity / 5000.0, 0.0, 1.0);
+            // Inverse mapping: density 0 = maxCellSize, density 1 = minCellSize
+            float cellSize = mix(maxCellSize, minCellSize, densityNormalized);
+            
+            vec2 cell = floor(coord / cellSize);
+            vec2 cellPos = fract(coord / cellSize);
+            
+            // Check if this cell should have a particle
+            float particleChance = hash(cell);
+            // Spawn probability increases with density: 0.1 at density 0, up to 1.0 at max density
+            // This gives more visible particles as density increases
+            float spawnProbability = mix(0.1, 1.0, densityNormalized);
+            
+            if (particleChance < spawnProbability) {
+              // Get particle position within cell (0-1 range)
+              vec2 particlePos = hash2(cell) * 0.8 + 0.1;
+              float dist = length(cellPos - particlePos);
+              
+              // Get particle size in pixels, then convert to cell space (0-1)
+              float particleSizePixels = mix(u_glitterSizeMin, u_glitterSizeMax, hash(cell + vec2(13.7, 31.3)));
+              float particleSize = particleSizePixels / cellSize;
+              
+              // Draw particle with smooth falloff
+              float particleAlpha = 1.0 - smoothstep(0.0, particleSize, dist);
+              
+              if (particleAlpha > 0.001) {
+                // Sample random color from gradient (not based on particle position)
+                // Use hash to get a random value between 0 and 1 for gradient sampling
+                float randomGradientPos = hash(cell + vec2(17.3, 23.7));
+                
+                // Get color from gradient at random position
+                vec3 glitterColor = getColorFromGradient(randomGradientPos);
+                
+                // Blend glitter with gradient - simple mix
+                col = mix(col, glitterColor, particleAlpha * 1.0);
+              }
+            }
+          }
+          
+          // Apply pixelization if enabled
+          if (u_pixelizationEnabled > 0) {
+            float pixelSize = u_pixelizationSize;
+            vec2 pixelCoord = floor(coord / pixelSize) * pixelSize;
+            // Sample at the center of each pixel block
+            vec2 sampleCoord = pixelCoord + vec2(pixelSize * 0.5);
+            // Re-evaluate gradient at pixelized coordinate
+            float sampleX = sampleCoord.x / u_resolution.x;
+            float sampleY = sampleCoord.y / u_resolution.y;
+            float clampedU = clamp(sampleX, 0.0, 1.0);
+            float clampedV = clamp(sampleY, 0.0, 1.0);
+            float vx = texture2D(u_xSamples, vec2(clampedU, 0.5)).r;
+            float vy = texture2D(u_ySamples, vec2(0.5, clampedV)).r;
+            vx = clamp(vx, 0.0, 1.0);
+            vy = clamp(vy, 0.0, 1.0);
+            
+            if (u_feather > 0.0) {
+              float fx = pow(sin((sampleCoord.x / u_resolution.x) * 3.14159265359), u_feather);
+              float fy = pow(sin((sampleCoord.y / u_resolution.y) * 3.14159265359), u_feather);
+              vx = lerp(vx, fx, 0.2);
+              vy = lerp(vy, fy, 0.2);
+            }
+            
+            float mixVal = blend(vx, vy, u_blendMode);
+            float vPixel = mixVal;
+            if (u_noiseAmount > 0.0) {
+              vec2 noiseCoord = sampleCoord / 256.0;
+              float n = (texture2D(u_noise, noiseCoord).r - 0.5) * u_noiseAmount;
+              vPixel = clamp(mixVal + n, 0.0, 1.0);
+            }
+            
+            col = getColorFromGradient(vPixel);
+          }
+          
+          // Apply Voronoi noise if enabled
+          if (u_voronoiEnabled > 0) {
+            float scale = u_voronoiScale;
+            vec2 voronoiCoord = coord / scale;
+            
+            // Get the cell coordinates
+            vec2 cell = floor(voronoiCoord);
+            vec2 cellPos = fract(voronoiCoord);
+            
+            // Find the closest point in the 3x3 grid
+            float minDist = 8.0;
+            vec2 closestPoint = vec2(0.0);
+            
+            for (int y = -1; y <= 1; y++) {
+              for (int x = -1; x <= 1; x++) {
+                vec2 neighbor = vec2(float(x), float(y));
+                vec2 point = neighbor + hash2(cell + neighbor);
+                vec2 diff = point - cellPos;
+                float dist = dot(diff, diff);
+                if (dist < minDist) {
+                  minDist = dist;
+                  closestPoint = point;
+                }
+              }
+            }
+            
+            // Use distance to closest point as noise value
+            float voronoiValue = sqrt(minDist);
+            float intensity = u_voronoiIntensity / 100.0;
+            float noiseOffset = (voronoiValue - 0.5) * intensity;
+            
+            // Apply to gradient value
+            float voronoiT = clamp(v + noiseOffset, 0.0, 1.0);
+            col = getColorFromGradient(voronoiT);
+          }
           
           gl_FragColor = vec4(col, 1.0);
         }
@@ -2284,7 +2455,26 @@
         paletteColors: gl.getUniformLocation(glProgram, 'u_paletteColors'),
         xSamples: gl.getUniformLocation(glProgram, 'u_xSamples'),
         ySamples: gl.getUniformLocation(glProgram, 'u_ySamples'),
-        noise: gl.getUniformLocation(glProgram, 'u_noise')
+        noise: gl.getUniformLocation(glProgram, 'u_noise'),
+        pixelizationEnabled: gl.getUniformLocation(glProgram, 'u_pixelizationEnabled'),
+        pixelizationSize: gl.getUniformLocation(glProgram, 'u_pixelizationSize'),
+        voronoiEnabled: gl.getUniformLocation(glProgram, 'u_voronoiEnabled'),
+        voronoiScale: gl.getUniformLocation(glProgram, 'u_voronoiScale'),
+        voronoiIntensity: gl.getUniformLocation(glProgram, 'u_voronoiIntensity'),
+        waveDistortionEnabled: gl.getUniformLocation(glProgram, 'u_waveDistortionEnabled'),
+        waveAmplitude: gl.getUniformLocation(glProgram, 'u_waveAmplitude'),
+        waveFrequency: gl.getUniformLocation(glProgram, 'u_waveFrequency'),
+        rippleDistortionEnabled: gl.getUniformLocation(glProgram, 'u_rippleDistortionEnabled'),
+        rippleStrength: gl.getUniformLocation(glProgram, 'u_rippleStrength'),
+        rippleSpeed: gl.getUniformLocation(glProgram, 'u_rippleSpeed'),
+        twirlDistortionEnabled: gl.getUniformLocation(glProgram, 'u_twirlDistortionEnabled'),
+        twirlAngle: gl.getUniformLocation(glProgram, 'u_twirlAngle'),
+        twirlRadius: gl.getUniformLocation(glProgram, 'u_twirlRadius'),
+        glitterEnabled: gl.getUniformLocation(glProgram, 'u_glitterEnabled'),
+        glitterDensity: gl.getUniformLocation(glProgram, 'u_glitterDensity'),
+        glitterSizeMin: gl.getUniformLocation(glProgram, 'u_glitterSizeMin'),
+        glitterSizeMax: gl.getUniformLocation(glProgram, 'u_glitterSizeMax'),
+        glitterDebugMode: gl.getUniformLocation(glProgram, 'u_glitterDebugMode')
       };
 
       // Create fullscreen quad
@@ -2531,7 +2721,106 @@
         cachedBlendMode = blendModeValue;
       }
 
-      // Pattern uniforms
+      // Pixelization uniforms
+      if (glUniformLocations.pixelizationEnabled !== null) {
+        const pixelizationEnabled = document.getElementById('pixelizationEnabled');
+        gl.uniform1i(glUniformLocations.pixelizationEnabled, pixelizationEnabled && pixelizationEnabled.checked ? 1 : 0);
+      }
+      if (glUniformLocations.pixelizationSize !== null) {
+        const pixelizationSizeInput = document.getElementById('pixelizationSizeInput');
+        const size = pixelizationSizeInput ? parseFloat(pixelizationSizeInput.value) || 4 : 4;
+        gl.uniform1f(glUniformLocations.pixelizationSize, size);
+      }
+
+      // Voronoi noise uniforms
+      if (glUniformLocations.voronoiEnabled !== null) {
+        const voronoiEnabled = document.getElementById('voronoiEnabled');
+        gl.uniform1i(glUniformLocations.voronoiEnabled, voronoiEnabled && voronoiEnabled.checked ? 1 : 0);
+      }
+      if (glUniformLocations.voronoiScale !== null) {
+        const voronoiScaleInput = document.getElementById('voronoiScaleInput');
+        const scale = voronoiScaleInput ? parseFloat(voronoiScaleInput.value) || 155 : 155;
+        gl.uniform1f(glUniformLocations.voronoiScale, scale);
+      }
+      if (glUniformLocations.voronoiIntensity !== null) {
+        const voronoiIntensityInput = document.getElementById('voronoiIntensityInput');
+        const intensity = voronoiIntensityInput ? parseFloat(voronoiIntensityInput.value) || 85 : 85;
+        gl.uniform1f(glUniformLocations.voronoiIntensity, intensity);
+      }
+
+      // Distortion uniforms
+      if (glUniformLocations.waveDistortionEnabled !== null) {
+        const waveDistortionEnabled = document.getElementById('waveDistortionEnabled');
+        gl.uniform1i(glUniformLocations.waveDistortionEnabled, waveDistortionEnabled && waveDistortionEnabled.checked ? 1 : 0);
+      }
+      if (glUniformLocations.waveAmplitude !== null) {
+        const waveAmplitudeInput = document.getElementById('waveAmplitudeInput');
+        const amplitude = waveAmplitudeInput ? parseFloat(waveAmplitudeInput.value) || 20 : 20;
+        gl.uniform1f(glUniformLocations.waveAmplitude, amplitude);
+      }
+      if (glUniformLocations.waveFrequency !== null) {
+        const waveFrequencyInput = document.getElementById('waveFrequencyInput');
+        const frequency = waveFrequencyInput ? parseFloat(waveFrequencyInput.value) || 5 : 5;
+        gl.uniform1f(glUniformLocations.waveFrequency, frequency);
+      }
+      
+      if (glUniformLocations.rippleDistortionEnabled !== null) {
+        const rippleDistortionEnabled = document.getElementById('rippleDistortionEnabled');
+        gl.uniform1i(glUniformLocations.rippleDistortionEnabled, rippleDistortionEnabled && rippleDistortionEnabled.checked ? 1 : 0);
+      }
+      if (glUniformLocations.rippleStrength !== null) {
+        const rippleStrengthInput = document.getElementById('rippleStrengthInput');
+        const strength = rippleStrengthInput ? parseFloat(rippleStrengthInput.value) || 30 : 30;
+        gl.uniform1f(glUniformLocations.rippleStrength, strength);
+      }
+      if (glUniformLocations.rippleSpeed !== null) {
+        const rippleSpeedInput = document.getElementById('rippleSpeedInput');
+        const speed = rippleSpeedInput ? parseFloat(rippleSpeedInput.value) || 3 : 3;
+        gl.uniform1f(glUniformLocations.rippleSpeed, speed);
+      }
+      
+      if (glUniformLocations.twirlDistortionEnabled !== null) {
+        const twirlDistortionEnabled = document.getElementById('twirlDistortionEnabled');
+        gl.uniform1i(glUniformLocations.twirlDistortionEnabled, twirlDistortionEnabled && twirlDistortionEnabled.checked ? 1 : 0);
+      }
+      if (glUniformLocations.twirlAngle !== null) {
+        const twirlAngleInput = document.getElementById('twirlAngleInput');
+        const angle = twirlAngleInput ? parseFloat(twirlAngleInput.value) || 30 : 30;
+        gl.uniform1f(glUniformLocations.twirlAngle, angle);
+      }
+      if (glUniformLocations.twirlRadius !== null) {
+        const twirlRadiusInput = document.getElementById('twirlRadiusInput');
+        const radius = twirlRadiusInput ? parseFloat(twirlRadiusInput.value) || 200 : 200;
+        gl.uniform1f(glUniformLocations.twirlRadius, radius);
+      }
+
+      // Glitter uniforms
+      if (glUniformLocations.glitterEnabled !== null) {
+        const glitterEnabled = document.getElementById('glitterEnabled');
+        gl.uniform1i(glUniformLocations.glitterEnabled, glitterEnabled && glitterEnabled.checked ? 1 : 0);
+      }
+      if (glUniformLocations.glitterDensity !== null) {
+        const glitterDensityInput = document.getElementById('glitterDensityInput');
+        // UI shows 1-100, but we need to map to 0-5000 (multiply by 50)
+        const uiValue = glitterDensityInput ? parseFloat(glitterDensityInput.value) || 50 : 50;
+        const density = uiValue * 50; // Convert 1-100 UI scale to 50-5000 actual value
+        gl.uniform1f(glUniformLocations.glitterDensity, density);
+      }
+      if (glUniformLocations.glitterSizeMin !== null) {
+        const glitterSizeMinInput = document.getElementById('glitterSizeMinInput');
+        const sizeMin = glitterSizeMinInput ? parseFloat(glitterSizeMinInput.value) || 1 : 1;
+        gl.uniform1f(glUniformLocations.glitterSizeMin, sizeMin);
+      }
+      if (glUniformLocations.glitterSizeMax !== null) {
+        const glitterSizeMaxInput = document.getElementById('glitterSizeMaxInput');
+        const sizeMax = glitterSizeMaxInput ? parseFloat(glitterSizeMaxInput.value) || 3 : 3;
+        gl.uniform1f(glUniformLocations.glitterSizeMax, sizeMax);
+      }
+      if (glUniformLocations.glitterDebugMode !== null) {
+        // Debug mode is always disabled (removed from UI)
+        gl.uniform1i(glUniformLocations.glitterDebugMode, 0);
+      }
+
       // Cache gradient stops - only recompute if changed
       const stopsKey = JSON.stringify(gradientStopsArray.map(s => ({ p: s.position, r: s.color.r, g: s.color.g, b: s.color.b })));
       const paletteKey = activePalette ? JSON.stringify(activePalette.map(c => ({ r: c.r, g: c.g, b: c.b }))) : '';
@@ -2618,7 +2907,7 @@
         return null; // Signal to use drawImage
       }
 
-      // Only read pixels if we need to (for dithering or ImageData)
+      // Only read pixels if we need to (for ImageData)
       if (!skipReadPixels) {
         // Read pixels from WebGL (readPixels always reads bottom-to-top)
         const readStart = enableProfiling ? performance.now() : 0;
@@ -2646,14 +2935,6 @@
           stepStart = performance.now();
         }
 
-        // Apply dithering if enabled
-        if (ditherEnabled.checked) {
-          const ditherStart = performance.now();
-          applyDithering(img, ditherAlgorithm.value, parseInt(ditherLevels.value) || 256);
-          if (enableProfiling) {
-            profile.steps.dithering = performance.now() - ditherStart;
-          }
-        }
 
         if (enableProfiling) {
           profile.total = performance.now() - startTime;
@@ -2681,49 +2962,29 @@
       const w = gradientCanvas.width;
       const h = gradientCanvas.height;
       
-      // If dithering is disabled, use fast path: render to WebGL canvas and copy with drawImage
+      // Use fast path: render to WebGL canvas and copy with drawImage
       // This avoids the expensive readPixels + putImageData path
-      if (!ditherEnabled.checked) {
-        const result = renderGradientWebGLAtSize(w, h, true); // skipReadPixels = true
-        if (result === null) {
-          // Copy WebGL canvas to 2D canvas using drawImage (much faster than readPixels)
-          // Clear canvas first to prevent any overflow artifacts
-          gctx.clearRect(0, 0, w, h);
-          // Disable smoothing for pixel-perfect rendering
-          gctx.imageSmoothingEnabled = false;
-          // Clip to exact canvas bounds to prevent any overflow
-          gctx.save();
-          gctx.beginPath();
-          gctx.rect(0, 0, w, h);
-          gctx.clip();
-          // Flip Y by scaling and translating (WebGL has Y=0 at bottom, canvas has Y=0 at top)
-          const drawImageStart = enableProfiling ? performance.now() : 0;
-          gctx.scale(1, -1);
-          gctx.translate(0, -Math.round(h));
-          // Explicitly specify dimensions to ensure pixel-perfect rendering
-          gctx.drawImage(glCanvas, 0, 0, Math.round(w), Math.round(h));
-          gctx.restore();
-        } else {
-          // Fallback if something went wrong
-          renderGradientCPU();
-        }
+      const result = renderGradientWebGLAtSize(w, h, true); // skipReadPixels = true
+      if (result === null) {
+        // Successfully rendered to WebGL canvas, now copy to 2D canvas using drawImage
+        // Clear canvas first to prevent any overflow artifacts
+        gctx.clearRect(0, 0, w, h);
+        // Disable smoothing for pixel-perfect rendering
+        gctx.imageSmoothingEnabled = false;
+        // Clip to exact canvas bounds to prevent any overflow
+        gctx.save();
+        gctx.beginPath();
+        gctx.rect(0, 0, w, h);
+        gctx.clip();
+        // Flip Y by scaling and translating (WebGL has Y=0 at bottom, canvas has Y=0 at top)
+        gctx.scale(1, -1);
+        gctx.translate(0, -Math.round(h));
+        // Explicitly specify dimensions to ensure pixel-perfect rendering
+        gctx.drawImage(glCanvas, 0, 0, Math.round(w), Math.round(h));
+        gctx.restore();
       } else {
-        // Dithering requires ImageData, so we need to read pixels
-        const img = renderGradientWebGLAtSize(w, h, false);
-        if (img) {
-          // Clear and clip to exact bounds before drawing
-          gctx.clearRect(0, 0, w, h);
-          gctx.save();
-          gctx.beginPath();
-          gctx.rect(0, 0, w, h);
-          gctx.clip();
-          // Draw to 2D canvas
-          gctx.putImageData(img, 0, 0);
-          gctx.restore();
-        } else {
-          // Fallback to CPU rendering
-          renderGradientCPU();
-        }
+        // Fallback if something went wrong
+        renderGradientCPU();
       }
     }
 
@@ -2760,11 +3021,6 @@
         }
       }
       
-      // Apply dithering if enabled
-      if (ditherEnabled.checked) {
-        applyDithering(img, ditherAlgorithm.value, parseInt(ditherLevels.value) || 256);
-      }
-      
       // Clear and clip to exact bounds before drawing
       gctx.clearRect(0, 0, w, h);
       gctx.save();
@@ -2782,10 +3038,6 @@
     const noiseValue = document.getElementById('noiseValue');
     const featherInput = document.getElementById('featherInput');
     const featherValue = document.getElementById('featherValue');
-    const ditherEnabled = document.getElementById('ditherEnabled');
-    const ditherAlgorithm = document.getElementById('ditherAlgorithm');
-    const ditherLevels = document.getElementById('ditherLevels');
-    const ditherLevelsSlider = document.getElementById('ditherLevelsSlider');
     
     // Add event listeners for controls that affect the gradient
     blendMode.addEventListener('change', () => {
@@ -2818,10 +3070,28 @@
     });
     
     noiseValue.addEventListener('input', () => {
+      // Allow user to type freely, only sync slider if value is valid
+      const numVal = parseInt(noiseValue.value);
+      if (!isNaN(numVal)) {
+        const val = Math.min(30, Math.max(0, numVal));
+        noiseInput.value = val;
+        renderGradient();
+      }
+    });
+    
+    noiseValue.addEventListener('blur', () => {
+      // Validate and clamp on blur
       const val = Math.min(30, Math.max(0, parseInt(noiseValue.value) || 0));
       noiseValue.value = val;
       noiseInput.value = val;
       renderGradient();
+    });
+    
+    noiseValue.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        noiseValue.blur();
+      }
     });
 
     // Feather slider and input sync
@@ -2831,61 +3101,30 @@
     });
     
     featherValue.addEventListener('input', () => {
+      // Allow user to type freely, only sync slider if value is valid
+      const numVal = parseInt(featherValue.value);
+      if (!isNaN(numVal)) {
+        const val = Math.min(40, Math.max(0, numVal));
+        featherInput.value = val;
+        renderGradient();
+      }
+    });
+    
+    featherValue.addEventListener('blur', () => {
+      // Validate and clamp on blur
       const val = Math.min(40, Math.max(0, parseInt(featherValue.value) || 0));
       featherValue.value = val;
       featherInput.value = val;
       renderGradient();
     });
     
-    // Dither controls
-    const ditherAlgorithmButtons = document.getElementById('ditherAlgorithmButtons');
+    featherValue.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        featherValue.blur();
+      }
+    });
     
-    function updateDitherAlgorithmButtons() {
-      if (ditherAlgorithmButtons) {
-        const buttons = ditherAlgorithmButtons.querySelectorAll('.blend-btn');
-        if (ditherEnabled.checked) {
-          // Show active state based on current algorithm
-          buttons.forEach(b => {
-            b.classList.remove('disabled');
-            b.classList.toggle('active', b.dataset.algorithm === ditherAlgorithm.value);
-          });
-        } else {
-          // Remove active state and add disabled state when dither is disabled
-          buttons.forEach(b => {
-            b.classList.remove('active');
-            b.classList.add('disabled');
-          });
-        }
-        
-        // Grey out the Algorithm label container
-        const algorithmContainer = ditherAlgorithmButtons.closest('label');
-        if (algorithmContainer) {
-          if (ditherEnabled.checked) {
-            algorithmContainer.classList.remove('disabled');
-          } else {
-            algorithmContainer.classList.add('disabled');
-          }
-        }
-      }
-      
-      // Update levels slider and input
-      if (ditherLevelsSlider) {
-        ditherLevelsSlider.disabled = !ditherEnabled.checked;
-        // Grey out the label container
-        const levelsContainer = ditherLevelsSlider.closest('label');
-        if (levelsContainer) {
-          if (ditherEnabled.checked) {
-            levelsContainer.classList.remove('disabled');
-          } else {
-            levelsContainer.classList.add('disabled');
-          }
-        }
-      }
-      if (ditherLevels) {
-        ditherLevels.disabled = !ditherEnabled.checked;
-      }
-    }
-
     function updateColorCountControls() {
       // Amount of colors slider is always active now
       if (multiColorCountSlider) {
@@ -2900,77 +3139,27 @@
       }
     }
     
-    ditherEnabled.addEventListener('change', () => {
-      saveHistory(); // Save state before changing dither
-      updateDitherAlgorithmButtons();
-      renderGradient();
-    });
-    
-    // Dither algorithm buttons
-    if (ditherAlgorithmButtons) {
-      // Initialize button states
-      updateDitherAlgorithmButtons();
-      
-      ditherAlgorithmButtons.querySelectorAll('.blend-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (!ditherEnabled.checked) return; // Don't allow selection when dither is off
-          
-          saveHistory(); // Save state before changing dither algorithm
-          const algorithm = btn.dataset.algorithm;
-          ditherAlgorithm.value = algorithm;
-          updateDitherAlgorithmButtons();
-          renderGradient();
-        });
-      });
-    }
-    
-    // Sync dither algorithm select with buttons
-    ditherAlgorithm.addEventListener('change', () => {
-      saveHistory(); // Save state before changing dither algorithm
-      updateDitherAlgorithmButtons();
-      if (ditherEnabled.checked) {
-        renderGradient();
-      }
-    });
-    
-    // Dither levels slider and input sync
-    ditherLevelsSlider.addEventListener('input', () => {
-      ditherLevels.value = ditherLevelsSlider.value;
-      if (ditherEnabled.checked) {
-        renderGradient();
-      }
-    });
-    
-    ditherLevels.addEventListener('change', () => {
-      saveHistory(); // Save state before changing dither levels
-      const val = Math.min(256, Math.max(2, parseInt(ditherLevels.value) || 2));
-      ditherLevels.value = val;
-      // Update slider only if value is within slider range (2-8)
-      if (val >= 2 && val <= 8) {
-        ditherLevelsSlider.value = val;
-      }
-      if (ditherEnabled.checked) {
-        renderGradient();
-      }
-    });
-    
-    // Also save on slider change (when user releases)
-    ditherLevelsSlider.addEventListener('change', () => {
-      saveHistory(); // Save state when slider is released
-      ditherLevels.value = ditherLevelsSlider.value;
-      if (ditherEnabled.checked) {
-        renderGradient();
-      }
-    });
-    
-    
     // Canvas size change handlers
     widthInput.addEventListener('change', () => {
       setCanvasSize();
     });
     
+    widthInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        widthInput.blur();
+      }
+    });
+    
     heightInput.addEventListener('change', () => {
       setCanvasSize();
+    });
+    
+    heightInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        heightInput.blur();
+      }
     });
     
     const exportScale = document.getElementById('exportScale');
@@ -3048,10 +3237,7 @@
         canvasHeight: parseInt(heightInput.value) || 520,
         blendMode: blendMode.value,
         noise: parseInt(noiseInput.value) || 0,
-        feather: parseInt(featherInput.value) || 0,
-        ditherEnabled: ditherEnabled.checked,
-        ditherAlgorithm: ditherAlgorithm.value,
-        ditherLevels: parseInt(ditherLevels.value) || 2
+        feather: parseInt(featherInput.value) || 0
       };
       
       history.push(state);
@@ -3108,20 +3294,6 @@
       noiseValue.value = state.noise;
       featherInput.value = state.feather;
       featherValue.value = state.feather;
-      
-      // Restore dither settings
-      ditherEnabled.checked = state.ditherEnabled;
-      ditherAlgorithm.value = state.ditherAlgorithm;
-      ditherLevels.value = state.ditherLevels;
-      ditherLevelsSlider.value = Math.min(8, Math.max(2, state.ditherLevels));
-      
-      // Update dither algorithm buttons
-      ditherAlgorithmButtons.querySelectorAll('.blend-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.algorithm === state.ditherAlgorithm);
-      });
-      
-      // Update UI states
-      updateDitherAlgorithmButtons();
       
       // Redraw everything
       xEditor.draw(activeCurve === 'x');
@@ -3315,8 +3487,24 @@
       renderGradient();
     });
 
-    let canvasSizeInitialized = false;
+    // Curve smoothness toggle (Sharp/Smooth)
+    // Curve smoothing toggle
+    const curveSmoothingToggle = document.getElementById('curveSmoothingToggle');
     
+    if (curveSmoothingToggle) {
+      curveSmoothingToggle.addEventListener('click', () => {
+        curveSmoothingToggle.classList.toggle('on');
+        // Invalidate curve samples cache so gradient updates with new smoothing
+        cachedXSamples = null;
+        cachedYSamples = null;
+        xEditor.draw(activeCurve === 'x');
+        yEditor.draw(activeCurve === 'y');
+        renderGradient();
+      });
+    }
+
+    let canvasSizeInitialized = false;
+
     function setCanvasSize() {
       saveHistory(); // Save state before changing canvas size
       
@@ -3342,7 +3530,7 @@
         userH = parseInt(heightInput.value) || 520;
       }
 
-      // Set canvas to user dimensions directly
+      // Set canvas to user dimensions directly (internal resolution)
       gradientCanvas.width = userW;
       gradientCanvas.height = userH;
       document.getElementById('xCurveCanvas').width = userW;
@@ -3350,24 +3538,45 @@
       document.getElementById('yCurveCanvas').width = userW;
       document.getElementById('yCurveCanvas').height = userH;
 
-      // Set wrapper to exact pixel dimensions (rounded to integers)
+      // Calculate display size - scale down if canvas is larger than available space
+      const outputArea = document.querySelector('.output-area');
+      const availableW = outputArea ? Math.max(1, Math.floor(outputArea.clientWidth)) : userW;
+      const availableH = outputArea ? Math.max(1, Math.floor(outputArea.clientHeight)) : userH;
+      
+      // Calculate scale factor to fit within available space
+      const scaleW = availableW / userW;
+      const scaleH = availableH / userH;
+      const scale = Math.min(1.0, scaleW, scaleH); // Don't scale up, only down
+      
+      // Calculate display dimensions
+      const displayW = Math.round(userW * scale);
+      const displayH = Math.round(userH * scale);
+
+      // Set wrapper to display dimensions (rounded to integers)
       if (canvasWrapper) {
-        canvasWrapper.style.width = `${Math.round(userW)}px`;
-        canvasWrapper.style.height = `${Math.round(userH)}px`;
+        canvasWrapper.style.width = `${displayW}px`;
+        canvasWrapper.style.height = `${displayH}px`;
       }
 
-      // Set canvas CSS dimensions to match internal resolution exactly (no scaling, rounded to integers)
-      gradientCanvas.style.width = `${Math.round(userW)}px`;
-      gradientCanvas.style.height = `${Math.round(userH)}px`;
-      document.getElementById('xCurveCanvas').style.width = `${Math.round(userW)}px`;
-      document.getElementById('xCurveCanvas').style.height = `${Math.round(userH)}px`;
-      document.getElementById('yCurveCanvas').style.width = `${Math.round(userW)}px`;
-      document.getElementById('yCurveCanvas').style.height = `${Math.round(userH)}px`;
+      // Set canvas CSS dimensions to display size (scaled if needed)
+      gradientCanvas.style.width = `${displayW}px`;
+      gradientCanvas.style.height = `${displayH}px`;
+      document.getElementById('xCurveCanvas').style.width = `${displayW}px`;
+      document.getElementById('xCurveCanvas').style.height = `${displayH}px`;
+      document.getElementById('yCurveCanvas').style.width = `${displayW}px`;
+      document.getElementById('yCurveCanvas').style.height = `${displayH}px`;
       
-      // Disable image smoothing for pixel-perfect rendering
-      gctx.imageSmoothingEnabled = false;
-      document.getElementById('xCurveCanvas').getContext('2d').imageSmoothingEnabled = false;
-      document.getElementById('yCurveCanvas').getContext('2d').imageSmoothingEnabled = false;
+      // Enable image smoothing when scaled down for better quality
+      if (scale < 1.0) {
+        gctx.imageSmoothingEnabled = true;
+        document.getElementById('xCurveCanvas').getContext('2d').imageSmoothingEnabled = true;
+        document.getElementById('yCurveCanvas').getContext('2d').imageSmoothingEnabled = true;
+      } else {
+        // Disable image smoothing for pixel-perfect rendering when not scaled
+        gctx.imageSmoothingEnabled = false;
+        document.getElementById('xCurveCanvas').getContext('2d').imageSmoothingEnabled = false;
+        document.getElementById('yCurveCanvas').getContext('2d').imageSmoothingEnabled = false;
+      }
 
       xEditor.draw(activeCurve === 'x');
       yEditor.draw(activeCurve === 'y');
@@ -3421,172 +3630,6 @@
         renderGradientWebGL();
         renderScheduled = false;
       });
-    }
-
-    // Dithering algorithms
-    function applyDithering(imgData, algorithm, levels) {
-      const w = imgData.width;
-      const h = imgData.height;
-      const data = imgData.data;
-      
-      // Create a copy to work with
-      const workingData = new Uint8ClampedArray(data);
-      
-      // Quantize function
-      const quantize = (value) => {
-        const step = 255 / (levels - 1);
-        const quantized = Math.round(value / step) * step;
-        return Math.max(0, Math.min(255, quantized));
-      };
-      
-      // Get pixel value
-      const getPixel = (x, y, channel) => {
-        if (x < 0 || x >= w || y < 0 || y >= h) return 0;
-        const idx = (y * w + x) * 4;
-        return workingData[idx + channel];
-      };
-      
-      // Set pixel value
-      const setPixel = (x, y, channel, value) => {
-        if (x < 0 || x >= w || y < 0 || y >= h) return;
-        const idx = (y * w + x) * 4;
-        workingData[idx + channel] = Math.max(0, Math.min(255, value));
-      };
-      
-      // Add error to pixel
-      const addError = (x, y, channel, error) => {
-        if (x < 0 || x >= w || y < 0 || y >= h) return;
-        const idx = (y * w + x) * 4;
-        workingData[idx + channel] = Math.max(0, Math.min(255, workingData[idx + channel] + error));
-      };
-      
-      switch (algorithm) {
-        case 'floyd-steinberg': {
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              for (let c = 0; c < 3; c++) {
-                const oldVal = getPixel(x, y, c);
-                const newVal = quantize(oldVal);
-                const error = oldVal - newVal;
-                setPixel(x, y, c, newVal);
-                
-                addError(x + 1, y, c, error * 7 / 16);
-                addError(x - 1, y + 1, c, error * 3 / 16);
-                addError(x, y + 1, c, error * 5 / 16);
-                addError(x + 1, y + 1, c, error * 1 / 16);
-              }
-            }
-          }
-          break;
-        }
-        
-        case 'atkinson': {
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              for (let c = 0; c < 3; c++) {
-                const oldVal = getPixel(x, y, c);
-                const newVal = quantize(oldVal);
-                const error = oldVal - newVal;
-                setPixel(x, y, c, newVal);
-                
-                const fraction = error / 8;
-                addError(x + 1, y, c, fraction);
-                addError(x + 2, y, c, fraction);
-                addError(x - 1, y + 1, c, fraction);
-                addError(x, y + 1, c, fraction);
-                addError(x + 1, y + 1, c, fraction);
-                addError(x, y + 2, c, fraction);
-              }
-            }
-          }
-          break;
-        }
-        
-        case 'stucki': {
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              for (let c = 0; c < 3; c++) {
-                const oldVal = getPixel(x, y, c);
-                const newVal = quantize(oldVal);
-                const error = oldVal - newVal;
-                setPixel(x, y, c, newVal);
-                
-                addError(x + 1, y, c, error * 8 / 42);
-                addError(x + 2, y, c, error * 4 / 42);
-                addError(x - 2, y + 1, c, error * 2 / 42);
-                addError(x - 1, y + 1, c, error * 4 / 42);
-                addError(x, y + 1, c, error * 8 / 42);
-                addError(x + 1, y + 1, c, error * 4 / 42);
-                addError(x + 2, y + 1, c, error * 2 / 42);
-                addError(x - 2, y + 2, c, error * 1 / 42);
-                addError(x - 1, y + 2, c, error * 2 / 42);
-                addError(x, y + 2, c, error * 4 / 42);
-                addError(x + 1, y + 2, c, error * 2 / 42);
-                addError(x + 2, y + 2, c, error * 1 / 42);
-              }
-            }
-          }
-          break;
-        }
-        
-        case 'burkes': {
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              for (let c = 0; c < 3; c++) {
-                const oldVal = getPixel(x, y, c);
-                const newVal = quantize(oldVal);
-                const error = oldVal - newVal;
-                setPixel(x, y, c, newVal);
-                
-                addError(x + 1, y, c, error * 8 / 32);
-                addError(x + 2, y, c, error * 4 / 32);
-                addError(x - 2, y + 1, c, error * 2 / 32);
-                addError(x - 1, y + 1, c, error * 4 / 32);
-                addError(x, y + 1, c, error * 8 / 32);
-                addError(x + 1, y + 1, c, error * 4 / 32);
-                addError(x + 2, y + 1, c, error * 2 / 32);
-              }
-            }
-          }
-          break;
-        }
-        
-        case 'ordered': {
-          // Bayer 8x8 matrix
-          const bayerMatrix = [
-            [0, 32, 8, 40, 2, 34, 10, 42],
-            [48, 16, 56, 24, 50, 18, 58, 26],
-            [12, 44, 4, 36, 14, 46, 6, 38],
-            [60, 28, 52, 20, 62, 30, 54, 22],
-            [3, 35, 11, 43, 1, 33, 9, 41],
-            [51, 19, 59, 27, 49, 17, 57, 25],
-            [15, 47, 7, 39, 13, 45, 5, 37],
-            [63, 31, 55, 23, 61, 29, 53, 21]
-          ];
-          
-          const step = 255 / (levels - 1);
-          
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              for (let c = 0; c < 3; c++) {
-                const idx = (y * w + x) * 4;
-                const oldVal = workingData[idx + c];
-                // Normalize bayer matrix value (0-63) to threshold (-0.5 to 0.5)
-                const threshold = (bayerMatrix[y % 8][x % 8] / 64 - 0.5) * step;
-                const newVal = oldVal + threshold;
-                const quantized = quantize(newVal);
-                workingData[idx + c] = quantized;
-              }
-            }
-          }
-          break;
-        }
-      }
-      
-      // Copy working data back to original
-      for (let i = 0; i < data.length; i++) {
-        data[i] = workingData[i];
-      }
     }
 
     function blend(a, b, mode) {
@@ -3658,12 +3701,11 @@
       exportCanvas.height = originalHeight * scale;
       const exportCtx = exportCanvas.getContext('2d');
 
-            // If scale is 1x and no dithering, copy directly from preview
-            // If dithering is enabled, re-render with 256 levels to preserve full color depth
-            if (scale === 1 && !ditherEnabled.checked) {
+            // If scale is 1x, copy directly from preview
+            if (scale === 1) {
               exportCtx.drawImage(gradientCanvas, 0, 0);
             } else {
-              // Re-render the gradient using WebGL (for both 1x with dithering and scaled exports)
+              // Re-render the gradient using WebGL for scaled exports
               let img = null;
               if (gl && glProgram) {
                 img = renderGradientWebGLAtSize(exportCanvas.width, exportCanvas.height);
@@ -3708,28 +3750,6 @@
       }
               }
                   
-              // Apply dithering if enabled
-              // Use the UI's level setting to create the visible dithering pattern
-              if (ditherEnabled.checked) {
-                try {
-                  // Validate ImageData before dithering
-                  if (!img.width || !img.height || !img.data) {
-                    throw new Error('Invalid ImageData before dithering');
-                  }
-                  // Apply dithering with the UI's level setting to create the visual pattern
-                  const ditherLevelsValue = parseInt(ditherLevels.value) || 256;
-                  applyDithering(img, ditherAlgorithm.value, ditherLevelsValue);
-                  // Validate ImageData after dithering
-                  if (!img.width || !img.height || !img.data) {
-                    throw new Error('ImageData corrupted after dithering');
-                  }
-                } catch (ditherError) {
-                  console.error('Dithering error details:', ditherError);
-                  console.error('ImageData state:', { width: img.width, height: img.height, dataLength: img.data ? img.data.length : 'no data' });
-                  throw new Error('Dithering failed: ' + ditherError.message);
-                }
-              }
-              
               // Put the image data to canvas
               // PNG export from canvas is always RGB mode (not indexed/palette)
               // even if the ImageData has quantized colors
@@ -3749,25 +3769,17 @@
               return hex.substring(1); // Remove # prefix
             }).join('-');
             
-            // Get dither info if enabled
-            let ditherInfo = '';
-            if (ditherEnabled.checked) {
-              const ditherAlgo = ditherAlgorithm.value.replace('-', '_');
-              const ditherLevelsValue = parseInt(ditherLevels.value) || 256;
-              ditherInfo = `_dither-${ditherAlgo}-${ditherLevelsValue}`;
-            }
-            
             // Get X curve point positions (sorted by t)
             const xPoints = [...xEditor.points].sort((a, b) => a.t - b.t).map(p => p.t.toFixed(2)).join(',');
             
             // Get Y curve point positions (sorted by t)
             const yPoints = [...yEditor.points].sort((a, b) => a.t - b.t).map(p => p.t.toFixed(2)).join(',');
             
-            // Build filename: prism_size_noise_feather_colors_dither_xCurve_yCurve.png
-            const filename = `prism_${width}x${height}_noise-${noiseVal}_feather-${featherVal}_colors-${colors}${ditherInfo}_x-${xPoints}_y-${yPoints}.png`;
+            // Build filename: prism_size_noise_feather_colors_xCurve_yCurve.png
+            const filename = `prism_${width}x${height}_noise-${noiseVal}_feather-${featherVal}_colors-${colors}_x-${xPoints}_y-${yPoints}.png`;
 
             // Export the image - use highest quality PNG with full RGB color mode
-            // For dithered images, we want to preserve full color depth
+            // Preserve full color depth
             let dataUrl;
             try {
               // Use toDataURL with explicit quality (though PNG doesn't use quality, this ensures RGB mode)
@@ -3832,6 +3844,117 @@
         sidebarElement.scrollTop += e.deltaY;
       }
     }, { passive: false });
+
+    // Glitter controls
+    const glitterEnabled = document.getElementById('glitterEnabled');
+    const glitterDensityInput = document.getElementById('glitterDensityInput');
+    const glitterDensityValue = document.getElementById('glitterDensityValue');
+    const glitterSizeMinInput = document.getElementById('glitterSizeMinInput');
+    const glitterSizeMinValue = document.getElementById('glitterSizeMinValue');
+    const glitterSizeMaxInput = document.getElementById('glitterSizeMaxInput');
+    const glitterSizeMaxValue = document.getElementById('glitterSizeMaxValue');
+    
+    if (glitterEnabled) {
+      glitterEnabled.addEventListener('change', () => {
+        renderGradient();
+      });
+    }
+    
+    if (glitterDensityInput && glitterDensityValue) {
+      glitterDensityInput.addEventListener('input', () => {
+        glitterDensityValue.value = glitterDensityInput.value;
+      renderGradient();
+    });
+
+      glitterDensityValue.addEventListener('input', () => {
+        // Allow user to type freely, only sync slider if value is valid
+        const numVal = parseFloat(glitterDensityValue.value);
+        if (!isNaN(numVal)) {
+          const val = Math.max(1, Math.min(100, numVal));
+          glitterDensityInput.value = val;
+          renderGradient();
+        }
+      });
+      
+      glitterDensityValue.addEventListener('blur', () => {
+        // Validate and clamp on blur
+        const val = Math.max(1, Math.min(100, parseFloat(glitterDensityValue.value) || 50));
+        glitterDensityInput.value = val;
+        glitterDensityValue.value = val;
+      renderGradient();
+    });
+
+      glitterDensityValue.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          glitterDensityValue.blur();
+        }
+      });
+    }
+    
+    if (glitterSizeMinInput && glitterSizeMinValue) {
+      glitterSizeMinInput.addEventListener('input', () => {
+        glitterSizeMinValue.value = glitterSizeMinInput.value;
+      renderGradient();
+    });
+      
+      glitterSizeMinValue.addEventListener('input', () => {
+        // Allow user to type freely, only sync slider if value is valid
+        const numVal = parseFloat(glitterSizeMinValue.value);
+        if (!isNaN(numVal)) {
+          const val = Math.max(0.5, Math.min(5, numVal));
+          glitterSizeMinInput.value = val;
+      renderGradient();
+        }
+      });
+      
+      glitterSizeMinValue.addEventListener('blur', () => {
+        // Validate and clamp on blur
+        const val = Math.max(0.5, Math.min(5, parseFloat(glitterSizeMinValue.value) || 1));
+        glitterSizeMinInput.value = val;
+        glitterSizeMinValue.value = val;
+      renderGradient();
+    });
+      
+      glitterSizeMinValue.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          glitterSizeMinValue.blur();
+        }
+      });
+    }
+    
+    if (glitterSizeMaxInput && glitterSizeMaxValue) {
+      glitterSizeMaxInput.addEventListener('input', () => {
+        glitterSizeMaxValue.value = glitterSizeMaxInput.value;
+      renderGradient();
+    });
+      
+      glitterSizeMaxValue.addEventListener('input', () => {
+        // Allow user to type freely, only sync slider if value is valid
+        const numVal = parseFloat(glitterSizeMaxValue.value);
+        if (!isNaN(numVal)) {
+          const val = Math.max(1, Math.min(4, numVal));
+          glitterSizeMaxInput.value = val;
+          renderGradient();
+        }
+      });
+      
+      glitterSizeMaxValue.addEventListener('blur', () => {
+        // Validate and clamp on blur
+        const val = Math.max(1, Math.min(4, parseFloat(glitterSizeMaxValue.value) || 3));
+        glitterSizeMaxInput.value = val;
+        glitterSizeMaxValue.value = val;
+        renderGradient();
+      });
+      
+      glitterSizeMaxValue.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          glitterSizeMaxValue.blur();
+        }
+      });
+    }
 
     // Help modal
     const helpButton = document.getElementById('helpButton');
@@ -3950,6 +4073,8 @@
       
       // STEP 6: Final update of the gradient
       renderGradientBar();
+      // Update color preview to show selected stop (or first stop if none selected)
+      updateColorPreviewFromSelectedStop();
       renderGradient();
     });
 
@@ -4235,6 +4360,32 @@
       }
     }
 
+    function updateColorPreviewFromSelectedStop() {
+      // Update color preview to show the selected stop's color, or first stop if none selected
+      let stopToShow = null;
+      if (selectedStopIndex >= 0 && selectedStopIndex < gradientStopsArray.length) {
+        stopToShow = gradientStopsArray[selectedStopIndex];
+      } else if (gradientStopsArray.length > 0) {
+        stopToShow = gradientStopsArray[0];
+      }
+      
+      if (stopToShow) {
+        const hex = rgbToHex(stopToShow.color.r, stopToShow.color.g, stopToShow.color.b);
+        colorHexInput.value = hex;
+        colorPreview.style.background = hex;
+        // If a stop is selected, also update the color picker state
+        if (selectedStopIndex >= 0) {
+          const hsl = rgbToHsl(stopToShow.color.r, stopToShow.color.g, stopToShow.color.b);
+          currentHue = hsl.h;
+          currentSaturation = hsl.s;
+          currentLightness = hsl.l;
+          drawSpectrum();
+          drawHueSlider();
+          updateMarkers();
+        }
+      }
+    }
+    
     function randomizeGradientStops() {
       const count = parseInt(multiColorCount.value) || 3;
       
@@ -4277,11 +4428,13 @@
       
       // Update selected stop if needed
       if (selectedStopIndex >= gradientStopsArray.length) {
-        selectedStopIndex = gradientStopsArray.length - 1;
+        selectedStopIndex = 0;
+        selectedStopId = gradientStopsArray[0]?.id || null;
       }
       
       // Always update both the bar and the gradient
       renderGradientBar();
+      updateColorPreviewFromSelectedStop();
       renderGradient();
     }
 
@@ -4619,6 +4772,7 @@
       });
       
       renderGradientBar();
+      updateColorPreviewFromSelectedStop();
       renderGradient();
     }
 
@@ -4682,52 +4836,72 @@
     });
 
     multiColorCount.addEventListener('input', () => {
+      // Allow user to type freely, only sync slider if value is valid
+      const numVal = parseInt(multiColorCount.value);
+      if (!isNaN(numVal)) {
+        const val = Math.min(20, Math.max(2, numVal));
+        // Update slider only if value is within slider range (2-20)
+        if (val >= 2 && val <= 20) {
+          multiColorCountSlider.value = val;
+        }
+        
+        const count = val;
+        // Adjust stop count without randomizing colors
+        const currentCount = gradientStopsArray.length;
+        if (count !== currentCount) {
+          saveHistory(); // Save state before changing color count
+          // Sort by position first to ensure we keep the right stops
+          gradientStopsArray.sort((a, b) => a.position - b.position);
+          
+          if (count < currentCount) {
+            // Keep first 'count' stops, remove the rest
+            gradientStopsArray.splice(count);
+          } else if (count > currentCount) {
+            // Add stops evenly distributed with interpolated colors
+            while (gradientStopsArray.length < count) {
+              const newIndex = gradientStopsArray.length;
+              const position = newIndex / (count - 1);
+              const col = getColorFromGradient(position);
+              gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
+            }
+          }
+          
+          // Update selected stop index if needed
+          if (selectedStopIndex >= gradientStopsArray.length) {
+            selectedStopIndex = Math.max(0, gradientStopsArray.length - 1);
+          }
+          
+          // Redistribute positions evenly
+          const finalCount = gradientStopsArray.length;
+          if (finalCount > 1) {
+            gradientStopsArray.forEach((stop, i) => {
+              stop.position = i / (finalCount - 1);
+            });
+          } else if (finalCount === 1) {
+            gradientStopsArray[0].position = 0;
+          }
+          
+          // Force complete re-render
+          renderGradientBar();
+          renderGradient();
+        }
+      }
+    });
+    
+    multiColorCount.addEventListener('blur', () => {
+      // Validate and clamp on blur
       const val = Math.min(20, Math.max(2, parseInt(multiColorCount.value) || 8));
       multiColorCount.value = val;
       // Update slider only if value is within slider range (2-20)
       if (val >= 2 && val <= 20) {
         multiColorCountSlider.value = val;
       }
-      
-      const count = val;
-      // Adjust stop count without randomizing colors
-      const currentCount = gradientStopsArray.length;
-      if (count !== currentCount) {
-        saveHistory(); // Save state before changing color count
-        // Sort by position first to ensure we keep the right stops
-        gradientStopsArray.sort((a, b) => a.position - b.position);
-        
-        if (count < currentCount) {
-          // Keep first 'count' stops, remove the rest
-          gradientStopsArray.splice(count);
-        } else if (count > currentCount) {
-          // Add stops evenly distributed with interpolated colors
-          while (gradientStopsArray.length < count) {
-            const newIndex = gradientStopsArray.length;
-            const position = newIndex / (count - 1);
-            const col = getColorFromGradient(position);
-            gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
-          }
-        }
-        
-        // Update selected stop index if needed
-        if (selectedStopIndex >= gradientStopsArray.length) {
-          selectedStopIndex = Math.max(0, gradientStopsArray.length - 1);
-        }
-        
-        // Redistribute positions evenly
-        const finalCount = gradientStopsArray.length;
-        if (finalCount > 1) {
-          gradientStopsArray.forEach((stop, i) => {
-            stop.position = i / (finalCount - 1);
-          });
-        } else if (finalCount === 1) {
-          gradientStopsArray[0].position = 0;
-        }
-        
-        // Force complete re-render
-        renderGradientBar();
-        renderGradient();
+    });
+    
+    multiColorCount.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        multiColorCount.blur();
       }
     });
 
@@ -4786,6 +4960,13 @@
         updateColorFromHex(val);
       }
     });
+    
+    colorHexInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        colorHexInput.blur();
+      }
+    });
 
     // Initial setup
     // Ensure curves are enabled by default
@@ -4804,6 +4985,13 @@
     xEditor.setMaxPoints(xComplexity);
     yEditor.setMaxPoints(yComplexity);
     renderGradientBar();
+    // Initialize color preview and hex input with first stop's color before selecting
+    if (gradientStopsArray.length > 0) {
+      const firstStop = gradientStopsArray[0];
+      const hex = rgbToHex(firstStop.color.r, firstStop.color.g, firstStop.color.b);
+      colorHexInput.value = hex;
+      colorPreview.style.background = hex;
+    }
     selectStop(0); // Select first stop by default to show color picker
     drawHueSlider();
     drawSpectrum();
@@ -4814,6 +5002,7 @@
     
     // Initialize button states (both disabled until first user action)
     updateHistoryButtons();
+
   </script>
 </body>
 
