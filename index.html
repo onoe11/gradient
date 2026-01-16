@@ -191,6 +191,7 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
+
     .help-button {
       position: fixed;
       bottom: 20px;
@@ -1406,22 +1407,22 @@
           <div style="margin-bottom: 8px;">
             <label style="font-size:11px; display:block; margin-bottom:4px;">Enable Glitter</label>
             <label class="ios-switch" style="display:block;">
-              <input type="checkbox" id="glitterEnabled" />
+              <input type="checkbox" id="glitterEnabled" checked />
               <span class="ios-switch-slider"></span>
             </label>
               </div>
           <label>
             Density
             <div class="slider-with-input">
-              <input type="range" id="glitterDensityInput" value="50" min="1" max="100" />
-              <input type="number" id="glitterDensityValue" value="50" min="1" max="100" style="width:60px; padding:4px 6px; font-size:12px;" />
+              <input type="range" id="glitterDensityInput" value="30" min="1" max="100" />
+              <input type="number" id="glitterDensityValue" value="30" min="1" max="100" style="width:60px; padding:4px 6px; font-size:12px;" />
             </div>
             </label>
           <label>
             Size Min
             <div class="slider-with-input">
-              <input type="range" id="glitterSizeMinInput" value="1" min="0.5" max="5" step="0.5" />
-              <input type="number" id="glitterSizeMinValue" value="1" min="0.5" max="5" step="0.5" style="width:60px; padding:4px 6px; font-size:12px;" />
+              <input type="range" id="glitterSizeMinInput" value="0.5" min="0.5" max="5" step="0.5" />
+              <input type="number" id="glitterSizeMinValue" value="0.5" min="0.5" max="5" step="0.5" style="width:60px; padding:4px 6px; font-size:12px;" />
           </div>
             </label>
           <label>
@@ -3141,6 +3142,9 @@
     
     // Canvas size change handlers
     widthInput.addEventListener('change', () => {
+      if (!isRestoringHistory) {
+        saveHistory(); // Save state before changing canvas size
+      }
       setCanvasSize();
     });
     
@@ -3152,6 +3156,9 @@
     });
     
     heightInput.addEventListener('change', () => {
+      if (!isRestoringHistory) {
+        saveHistory(); // Save state before changing canvas size
+      }
       setCanvasSize();
     });
     
@@ -3221,8 +3228,18 @@
     let isRestoringHistory = false; // Flag to prevent saving history during restore
     
     // Save current state to history
+    let lastSaveTime = 0;
+    const SAVE_THROTTLE_MS = 50; // Prevent duplicate saves within 50ms
+    
     function saveHistory() {
       if (isRestoringHistory) return;
+      
+      // Throttle saves to prevent duplicate saves from rapid events
+      const now = performance.now();
+      if (now - lastSaveTime < SAVE_THROTTLE_MS) {
+        return; // Skip if save was called too recently
+      }
+      lastSaveTime = now;
       
       // Remove any future history if we're not at the end
       if (historyIndex < history.length - 1) {
@@ -3240,14 +3257,15 @@
         feather: parseInt(featherInput.value) || 0
       };
       
-      history.push(state);
-      
-      // Limit history to max steps
-      if (history.length > historyMaxSteps) {
+      // Limit history to max steps BEFORE adding new state
+      if (history.length >= historyMaxSteps) {
         history.shift(); // Remove oldest
-      } else {
-        historyIndex++;
+        // Don't adjust historyIndex here - we'll set it correctly after push
       }
+      
+      history.push(state);
+      // historyIndex should point to the last element (newly added state)
+      historyIndex = history.length - 1;
       
       // Update button states
       if (typeof updateHistoryButtons === 'function') {
@@ -3278,7 +3296,7 @@
       xEditor.setPoints(JSON.parse(JSON.stringify(state.xPoints)));
       yEditor.setPoints(JSON.parse(JSON.stringify(state.yPoints)));
       
-      // Restore canvas size
+      // Restore canvas size (setCanvasSize won't save history due to isRestoringHistory flag)
       widthInput.value = state.canvasWidth;
       heightInput.value = state.canvasHeight;
       setCanvasSize();
@@ -3420,18 +3438,143 @@
       }
     });
 
-    // Randomize curves button - randomize on click
+    // Randomize curves button - randomize on click with smooth transition
     randomizeCurvesBtn.addEventListener('click', () => {
       saveHistory(); // Save state before randomizing curves
+      
+      // Store old curve points for transition
+      const oldXPoints = JSON.parse(JSON.stringify(xEditor.points));
+      const oldYPoints = JSON.parse(JSON.stringify(yEditor.points));
+      const oldXComplexity = xEditor.points.length;
+      const oldYComplexity = yEditor.points.length;
+      
+      // Generate new curves
       const seed = Math.floor(Math.random() * 1000000);
-      seededRNG.setSeed(seed);
       const xComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
       const yComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
-      xEditor.randomize(seededRNG, xComplexity);
-      yEditor.randomize(seededRNG, yComplexity);
+      
+      // Generate new points using separate RNG instances to ensure consistent randomness
+      const xRNG = new SeededRNG(seed);
+      const yRNG = new SeededRNG(seed + 1000000); // Different seed for Y to ensure different values
+      
+      const newXPoints = [];
+      const newYPoints = [];
+      
+      // Generate X curve points
+      for (let i = 0; i < xComplexity; i++) {
+        const t = i / (xComplexity - 1);
+        newXPoints.push({
+          t: t,
+          v: xRNG.random()
+        });
+      }
+      
+      // Generate Y curve points
+      for (let i = 0; i < yComplexity; i++) {
+        const t = i / (yComplexity - 1);
+        newYPoints.push({
+          t: t,
+          v: yRNG.random()
+        });
+      }
+      
+      // Set max points first
       xEditor.setMaxPoints(xComplexity);
       yEditor.setMaxPoints(yComplexity);
-      renderGradient();
+      
+      // Helper function to sample curve value at a given t
+      function sampleCurveAtT(oldPoints, t) {
+        if (oldPoints.length === 0) return 0;
+        if (oldPoints.length === 1) return oldPoints[0].v;
+        
+        // Find the segment that contains t
+        for (let i = 0; i < oldPoints.length - 1; i++) {
+          if (t >= oldPoints[i].t && t <= oldPoints[i + 1].t) {
+            // Interpolate between these two points
+            const t0 = oldPoints[i].t;
+            const t1 = oldPoints[i + 1].t;
+            const v0 = oldPoints[i].v;
+            const v1 = oldPoints[i + 1].v;
+            const localT = (t - t0) / (t1 - t0);
+            return v0 + (v1 - v0) * localT;
+          }
+        }
+        
+        // If t is outside range, return closest point value
+        if (t <= oldPoints[0].t) return oldPoints[0].v;
+        return oldPoints[oldPoints.length - 1].v;
+      }
+      
+      // Create starting points for animation
+      // If point count changed, sample old curve at new point positions
+      const startXPoints = newXPoints.map(newPoint => ({
+        t: newPoint.t,
+        v: sampleCurveAtT(oldXPoints, newPoint.t)
+      }));
+      
+      const startYPoints = newYPoints.map(newPoint => ({
+        t: newPoint.t,
+        v: sampleCurveAtT(oldYPoints, newPoint.t)
+      }));
+      
+      // Set initial points to start positions
+      xEditor.setPoints(startXPoints);
+      yEditor.setPoints(startYPoints);
+      
+      // Animate transition over 250ms
+      const duration = 250; // milliseconds
+      const startTime = performance.now();
+      
+      function animateCurveTransition(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease-in-out for smooth transition
+        const eased = progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        
+        // Interpolate X curve points
+        const currentXPoints = newXPoints.map((newPoint, i) => ({
+          t: newPoint.t,
+          v: startXPoints[i].v + (newPoint.v - startXPoints[i].v) * eased
+        }));
+        
+        // Interpolate Y curve points
+        const currentYPoints = newYPoints.map((newPoint, i) => ({
+          t: newPoint.t,
+          v: startYPoints[i].v + (newPoint.v - startYPoints[i].v) * eased
+        }));
+        
+        // Update curves
+        xEditor.setPoints(currentXPoints);
+        yEditor.setPoints(currentYPoints);
+        
+        // Invalidate cache to force re-evaluation
+        cachedXSamples = null;
+        cachedYSamples = null;
+        
+        // Update display
+        xEditor.draw(activeCurve === 'x');
+        yEditor.draw(activeCurve === 'y');
+        renderGradient();
+        
+        // Continue animation if not complete
+        if (progress < 1) {
+          requestAnimationFrame(animateCurveTransition);
+        } else {
+          // Ensure final points are set exactly
+          xEditor.setPoints(newXPoints);
+          yEditor.setPoints(newYPoints);
+          cachedXSamples = null;
+          cachedYSamples = null;
+          xEditor.draw(activeCurve === 'x');
+          yEditor.draw(activeCurve === 'y');
+          renderGradient();
+        }
+      }
+      
+      requestAnimationFrame(animateCurveTransition);
     });
 
     // Determine which editor is active
@@ -3506,7 +3649,8 @@
     let canvasSizeInitialized = false;
 
     function setCanvasSize() {
-      saveHistory(); // Save state before changing canvas size
+      // Don't save history here - it's called from restoreHistory and would create duplicate entries
+      // History should be saved by the action that triggers the size change (user input)
       
       let userW, userH;
       
@@ -3845,6 +3989,8 @@
       }
     }, { passive: false });
 
+    // Debug panel
+
     // Glitter controls
     const glitterEnabled = document.getElementById('glitterEnabled');
     const glitterDensityInput = document.getElementById('glitterDensityInput');
@@ -3856,8 +4002,8 @@
     
     if (glitterEnabled) {
       glitterEnabled.addEventListener('change', () => {
-        renderGradient();
-      });
+      renderGradient();
+    });
     }
     
     if (glitterDensityInput && glitterDensityValue) {
@@ -4000,22 +4146,51 @@
         randomBtn.classList.remove('animating');
       }, 600);
       
+      // Store old state for transitions
+      const oldXPoints = JSON.parse(JSON.stringify(xEditor.points));
+      const oldYPoints = JSON.parse(JSON.stringify(yEditor.points));
+      const oldColors = gradientStopsArray.map(stop => ({ ...stop.color }));
+      const oldColorCount = gradientStopsArray.length;
+      
       // STEP 1: Set amount of colors FIRST (3-11)
       const colorCount = Math.floor(Math.random() * 9) + 3; // 3 to 11
       multiColorCount.value = colorCount;
       multiColorCountSlider.value = colorCount;
       
+      // STEP 2: Generate new curves
+      const curveSeed = Math.floor(Math.random() * 1000000);
+      const xComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+      const yComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+      
+      // Generate new curve points
+      const xRNG = new SeededRNG(curveSeed);
+      const yRNG = new SeededRNG(curveSeed + 1000000);
+      
+      const newXPoints = [];
+      const newYPoints = [];
+      
+      for (let i = 0; i < xComplexity; i++) {
+        const t = i / (xComplexity - 1);
+        newXPoints.push({ t: t, v: xRNG.random() });
+      }
+      
+      for (let i = 0; i < yComplexity; i++) {
+        const t = i / (yComplexity - 1);
+        newYPoints.push({ t: t, v: yRNG.random() });
+      }
+      
+      // STEP 3: Generate new colors
+      const colorSeed = Math.floor(Math.random() * 1000000);
+      const colorRNG = new SeededRNG(colorSeed);
+      
       // Adjust stop count to match the new count
       const currentCount = gradientStopsArray.length;
       if (colorCount !== currentCount) {
-        // Sort by position first to ensure we keep the right stops
         gradientStopsArray.sort((a, b) => a.position - b.position);
         
         if (colorCount < currentCount) {
-          // Keep first 'colorCount' stops, remove the rest
           gradientStopsArray.splice(colorCount);
         } else if (colorCount > currentCount) {
-          // Add stops evenly distributed with interpolated colors
           while (gradientStopsArray.length < colorCount) {
             const newIndex = gradientStopsArray.length;
             const position = newIndex / (colorCount - 1);
@@ -4024,12 +4199,10 @@
           }
         }
         
-        // Update selected stop index if needed
         if (selectedStopIndex >= gradientStopsArray.length) {
           selectedStopIndex = Math.max(0, gradientStopsArray.length - 1);
         }
         
-        // Redistribute positions evenly
         const finalCount = gradientStopsArray.length;
         if (finalCount > 1) {
           gradientStopsArray.forEach((stop, i) => {
@@ -4039,23 +4212,28 @@
           gradientStopsArray[0].position = 0;
         }
       }
-
-      // STEP 2: Randomize curves
-      const curveSeed = Math.floor(Math.random() * 1000000);
-      seededRNG.setSeed(curveSeed);
-      const xComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
-      const yComplexity = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
-      xEditor.randomize(seededRNG, xComplexity);
-      yEditor.randomize(seededRNG, yComplexity);
-      xEditor.setMaxPoints(xComplexity);
-      yEditor.setMaxPoints(yComplexity);
-
-      // STEP 3: Randomize colors (now that count is set)
-      const colorSeed = Math.floor(Math.random() * 1000000);
-      seededRNG.setSeed(colorSeed);
-      randomizeGradientStops();
-
-      // STEP 4: Randomize global blend mode
+      
+      // Generate new colors
+      const newColors = [];
+      gradientStopsArray.forEach((stop, i) => {
+        stop.position = i / (colorCount - 1);
+        newColors.push({
+          r: colorRNG.randomInt(0, 255),
+          g: colorRNG.randomInt(0, 255),
+          b: colorRNG.randomInt(0, 255)
+        });
+      });
+      
+      // Clear activePalette
+        activePalette = null;
+      
+      // Update selected stop if needed
+      if (selectedStopIndex >= gradientStopsArray.length) {
+        selectedStopIndex = 0;
+        selectedStopId = gradientStopsArray[0]?.id || null;
+      }
+      
+      // STEP 4: Randomize global blend mode (instant, no transition)
       const blendModes = ['avg', 'mul', 'screen', 'overlay', 'softlight', 'hardlight', 'difference', 'exclusion', 'darken', 'lighten', 'colorburn', 'colordodge'];
       const randomBlendMode = blendModes[Math.floor(Math.random() * blendModes.length)];
       blendMode.value = randomBlendMode;
@@ -4066,16 +4244,175 @@
         }
       });
       
-      // STEP 5: Randomize noise (2-11 range)
+      // STEP 5: Randomize noise (instant, no transition)
       const randomNoise = Math.floor(Math.random() * 10) + 2; // 2 to 11
       noiseInput.value = randomNoise;
       noiseValue.value = randomNoise;
       
-      // STEP 6: Final update of the gradient
-      renderGradientBar();
-      // Update color preview to show selected stop (or first stop if none selected)
-      updateColorPreviewFromSelectedStop();
+      // STEP 6: Randomize glitter (instant, no transition)
+      const glitterEnabledCheckbox = document.getElementById('glitterEnabled');
+      const glitterDensityInput = document.getElementById('glitterDensityInput');
+      const glitterDensityValue = document.getElementById('glitterDensityValue');
+      const glitterSizeMinInput = document.getElementById('glitterSizeMinInput');
+      const glitterSizeMinValue = document.getElementById('glitterSizeMinValue');
+      const glitterSizeMaxInput = document.getElementById('glitterSizeMaxInput');
+      const glitterSizeMaxValue = document.getElementById('glitterSizeMaxValue');
+      
+      if (glitterEnabledCheckbox && glitterDensityInput && glitterDensityValue) {
+        // Randomize density: 7-56 (UI scale)
+        const randomDensity = Math.floor(Math.random() * 50) + 7; // 7 to 56
+        glitterDensityInput.value = randomDensity;
+        glitterDensityValue.value = randomDensity;
+      }
+      
+      if (glitterSizeMinInput && glitterSizeMinValue) {
+        // Size min remains fixed at 0.5
+        glitterSizeMinInput.value = 0.5;
+        glitterSizeMinValue.value = 0.5;
+      }
+      
+      if (glitterSizeMaxInput && glitterSizeMaxValue) {
+        // Randomize size max: 2-3
+        const randomSizeMax = Math.random() * 1 + 2; // 2 to 3
+        // Round to nearest 0.5
+        const roundedSizeMax = Math.round(randomSizeMax * 2) / 2;
+        glitterSizeMaxInput.value = roundedSizeMax;
+        glitterSizeMaxValue.value = roundedSizeMax;
+      }
+      
+      // Helper function to sample curve value at a given t
+      function sampleCurveAtT(oldPoints, t) {
+        if (oldPoints.length === 0) return 0;
+        if (oldPoints.length === 1) return oldPoints[0].v;
+        
+        for (let i = 0; i < oldPoints.length - 1; i++) {
+          if (t >= oldPoints[i].t && t <= oldPoints[i + 1].t) {
+            const t0 = oldPoints[i].t;
+            const t1 = oldPoints[i + 1].t;
+            const v0 = oldPoints[i].v;
+            const v1 = oldPoints[i + 1].v;
+            const localT = (t - t0) / (t1 - t0);
+            return v0 + (v1 - v0) * localT;
+          }
+        }
+        
+        if (t <= oldPoints[0].t) return oldPoints[0].v;
+        return oldPoints[oldPoints.length - 1].v;
+      }
+      
+      // Set max points first
+      xEditor.setMaxPoints(xComplexity);
+      yEditor.setMaxPoints(yComplexity);
+      
+      // Create starting points for curve animation
+      const startXPoints = newXPoints.map(newPoint => ({
+        t: newPoint.t,
+        v: sampleCurveAtT(oldXPoints, newPoint.t)
+      }));
+      
+      const startYPoints = newYPoints.map(newPoint => ({
+        t: newPoint.t,
+        v: sampleCurveAtT(oldYPoints, newPoint.t)
+      }));
+      
+      // Set initial curve points
+      xEditor.setPoints(startXPoints);
+      yEditor.setPoints(startYPoints);
+      
+      // Prepare color transition - map old colors to new positions
+      const startColors = newColors.map((newColor, i) => {
+        if (i < oldColors.length) {
+          return { ...oldColors[i] };
+        }
+        // If we have more colors now, use the last old color or interpolate
+        return oldColors.length > 0 ? { ...oldColors[oldColors.length - 1] } : { r: 128, g: 128, b: 128 };
+      });
+      
+      // Set initial colors
+      gradientStopsArray.forEach((stop, i) => {
+        stop.color = startColors[i] || { r: 128, g: 128, b: 128 };
+      });
+      
+      // Get transition durations
+      const colorDuration = 340; // Fixed transition duration in milliseconds
+      const curveDuration = 250; // Fixed 250ms for curves
+      
+      // Use the longer duration for the animation
+      const duration = Math.max(colorDuration, curveDuration);
+      const startTime = performance.now();
+      
+      function animateGlobalTransition(currentTime) {
+        const elapsed = currentTime - startTime;
+        const colorProgress = Math.min(elapsed / colorDuration, 1);
+        const curveProgress = Math.min(elapsed / curveDuration, 1);
+        
+        // Ease-in-out for smooth transitions
+        const colorEased = colorProgress < 0.5
+          ? 2 * colorProgress * colorProgress
+          : 1 - Math.pow(-2 * colorProgress + 2, 2) / 2;
+        
+        const curveEased = curveProgress < 0.5
+          ? 2 * curveProgress * curveProgress
+          : 1 - Math.pow(-2 * curveProgress + 2, 2) / 2;
+        
+        // Animate curves
+        const currentXPoints = newXPoints.map((newPoint, i) => ({
+          t: newPoint.t,
+          v: startXPoints[i].v + (newPoint.v - startXPoints[i].v) * curveEased
+        }));
+        
+        const currentYPoints = newYPoints.map((newPoint, i) => ({
+          t: newPoint.t,
+          v: startYPoints[i].v + (newPoint.v - startYPoints[i].v) * curveEased
+        }));
+        
+        xEditor.setPoints(currentXPoints);
+        yEditor.setPoints(currentYPoints);
+        
+        // Animate colors
+        gradientStopsArray.forEach((stop, i) => {
+          const startColor = startColors[i] || { r: 128, g: 128, b: 128 };
+          const endColor = newColors[i] || { r: 128, g: 128, b: 128 };
+          
+          stop.color = {
+            r: Math.round(startColor.r + (endColor.r - startColor.r) * colorEased),
+            g: Math.round(startColor.g + (endColor.g - startColor.g) * colorEased),
+            b: Math.round(startColor.b + (endColor.b - startColor.b) * colorEased)
+          };
+        });
+        
+        // Invalidate cache
+        cachedXSamples = null;
+        cachedYSamples = null;
+        
+        // Update display
+        xEditor.draw(activeCurve === 'x');
+        yEditor.draw(activeCurve === 'y');
+        renderGradientBar();
+        updateColorPreviewFromSelectedStop();
       renderGradient();
+        
+        // Continue animation if not complete
+        if (elapsed < duration) {
+          requestAnimationFrame(animateGlobalTransition);
+        } else {
+          // Ensure final values are set exactly
+          xEditor.setPoints(newXPoints);
+          yEditor.setPoints(newYPoints);
+          gradientStopsArray.forEach((stop, i) => {
+            stop.color = newColors[i];
+          });
+          cachedXSamples = null;
+          cachedYSamples = null;
+          xEditor.draw(activeCurve === 'x');
+          yEditor.draw(activeCurve === 'y');
+          renderGradientBar();
+          updateColorPreviewFromSelectedStop();
+      renderGradient();
+        }
+      }
+      
+      requestAnimationFrame(animateGlobalTransition);
     });
 
 
@@ -4781,12 +5118,107 @@
       shuffleColors();
     });
 
-    // Randomize colors button handler
+    // Randomize colors button handler with smooth transition
     randomizeColorsBtn.addEventListener('click', () => {
       saveHistory(); // Save state before randomizing colors
+      
+      // Store old colors for transition
+      const oldColors = gradientStopsArray.map(stop => ({ ...stop.color }));
+      const oldCount = gradientStopsArray.length;
+      
+      // Generate new colors
       const seed = Math.floor(Math.random() * 1000000);
       seededRNG.setSeed(seed);
-      randomizeGradientStops();
+      const count = parseInt(multiColorCount.value) || 3;
+      
+      // Sort by position first
+      gradientStopsArray.sort((a, b) => a.position - b.position);
+      
+      // Adjust stop count to match requested count
+      if (gradientStopsArray.length < count) {
+        // Add stops evenly distributed
+        while (gradientStopsArray.length < count) {
+          const newIndex = gradientStopsArray.length;
+          const position = newIndex / (count - 1);
+          const col = getColorFromGradient(position);
+          gradientStopsArray.push({ id: stopIdCounter++, position, color: col });
+        }
+      } else if (gradientStopsArray.length > count) {
+        // Remove last stops until we reach the desired count
+        while (gradientStopsArray.length > count) {
+          if (gradientStopsArray.length > 1) {
+            gradientStopsArray.pop();
+          } else {
+            break;
+          }
+        }
+      }
+      
+      // Redistribute positions evenly and generate new colors
+      const newColors = [];
+      gradientStopsArray.forEach((stop, i) => {
+        stop.position = i / (count - 1);
+        newColors.push({
+          r: seededRNG.randomInt(0, 255),
+          g: seededRNG.randomInt(0, 255),
+          b: seededRNG.randomInt(0, 255)
+        });
+      });
+      
+      // Clear activePalette since we're using gradient stops
+      activePalette = null;
+      
+      // Update selected stop if needed
+      if (selectedStopIndex >= gradientStopsArray.length) {
+        selectedStopIndex = 0;
+        selectedStopId = gradientStopsArray[0]?.id || null;
+      }
+      
+      // Get transition duration from debug panel (default 340ms)
+      const duration = 340; // Fixed transition duration in milliseconds
+      const startTime = performance.now();
+      
+      function animateTransition(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease-in-out for smooth transition
+        const eased = progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        
+        // Interpolate colors
+        gradientStopsArray.forEach((stop, i) => {
+          const oldColor = i < oldColors.length ? oldColors[i] : { r: 128, g: 128, b: 128 };
+          const newColor = newColors[i];
+          
+          stop.color = {
+            r: Math.round(oldColor.r + (newColor.r - oldColor.r) * eased),
+            g: Math.round(oldColor.g + (newColor.g - oldColor.g) * eased),
+            b: Math.round(oldColor.b + (newColor.b - oldColor.b) * eased)
+          };
+        });
+        
+        // Update display
+        renderGradientBar();
+        updateColorPreviewFromSelectedStop();
+        renderGradient();
+        
+        // Continue animation if not complete
+        if (progress < 1) {
+          requestAnimationFrame(animateTransition);
+        } else {
+          // Ensure final colors are set exactly
+          gradientStopsArray.forEach((stop, i) => {
+            stop.color = newColors[i];
+          });
+          renderGradientBar();
+          updateColorPreviewFromSelectedStop();
+          renderGradient();
+        }
+      }
+      
+      requestAnimationFrame(animateTransition);
     });
 
     // Sync slider and number input for color count
@@ -4999,6 +5431,9 @@
     initWebGL(); // Initialize WebGL renderer
     // Initialize canvas size based on screen, but allow user to change it
     setCanvasSize();
+    
+    // Save initial state to history so undo works after first user action
+    saveHistory();
     
     // Initialize button states (both disabled until first user action)
     updateHistoryButtons();
